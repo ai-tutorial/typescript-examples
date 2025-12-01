@@ -25,11 +25,11 @@ const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '
 let spinnerIndex = 0;
 let spinnerInterval: NodeJS.Timeout | null = null;
 
-const startSpinner = (): void => {
-  process.stdout.write('\r' + colors.cyan + spinnerFrames[spinnerIndex] + colors.reset + ' Waiting for config file...');
+const startSpinner = (message: string = 'Waiting for config file...'): void => {
+  process.stdout.write('\r' + colors.cyan + spinnerFrames[spinnerIndex] + colors.reset + ' ' + message);
   spinnerInterval = setInterval(() => {
     spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
-    process.stdout.write('\r' + colors.cyan + spinnerFrames[spinnerIndex] + colors.reset + ' Waiting for config file...');
+    process.stdout.write('\r' + colors.cyan + spinnerFrames[spinnerIndex] + colors.reset + ' ' + message);
   }, SPINNER_INTERVAL);
 };
 
@@ -39,6 +39,32 @@ const stopSpinner = (): void => {
     spinnerInterval = null;
   }
   process.stdout.write('\r' + ' '.repeat(50) + '\r'); // Clear spinner line
+};
+
+// Install dependencies
+const installDependencies = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // Check if package.json exists
+    if (!existsSync('package.json')) {
+      resolve(); // No package.json, skip install
+      return;
+    }
+    
+    startSpinner('Installing dependencies...');
+    
+    try {
+      execSync('npm install', { stdio: 'pipe' });
+      stopSpinner();
+      console.log(colors.green + '✓ Dependencies installed' + colors.reset);
+      resolve();
+    } catch (error) {
+      stopSpinner();
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(colors.yellow + `⚠ Warning: Failed to install dependencies: ${errorMessage}` + colors.reset);
+      // Don't fail the script if npm install fails, just warn
+      resolve();
+    }
+  });
 };
 
 // Wait for config file to be created
@@ -51,7 +77,7 @@ const waitForConfigFile = (): Promise<void> => {
     }
     
     const startTime = Date.now();
-    startSpinner();
+    startSpinner('Waiting for config file...');
     
     const checkFile = (): void => {
       if (existsSync(CONFIG_FILE)) {
@@ -183,6 +209,9 @@ const askRunAgain = (): Promise<void> => {
 // Main function
 const main = async (): Promise<void> => {
   try {
+    // Install dependencies first
+    await installDependencies();
+    
     await waitForConfigFile();
     
     const filePath = readConfigFile();

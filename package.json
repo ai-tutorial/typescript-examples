@@ -13,7 +13,9 @@
   },
   "dependencies": {
     "@types/node": "^24.10.1",
+    "ajv": "^8.17.1",
     "dotenv": "^17.2.3",
-    "openai": "^6.9.1"
+    "openai": "^6.9.1",
+    "zod": "^4.1.13"
   }
 }

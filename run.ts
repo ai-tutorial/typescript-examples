@@ -41,6 +41,16 @@ const stopSpinner = (): void => {
   process.stdout.write('\r' + ' '.repeat(50) + '\r'); // Clear spinner line
 };
 
+// Clear the terminal
+const clearTerminal = (): void => {
+  try {
+    execSync('clear', { stdio: 'inherit' });
+  } catch (error) {
+    // If clear fails, try using ANSI escape code
+    process.stdout.write('\x1b[2J\x1b[0f');
+  }
+};
+
 // Install dependencies
 const installDependencies = (): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -209,6 +219,9 @@ const askRunAgain = (): Promise<void> => {
 // Main function
 const main = async (): Promise<void> => {
   try {
+    // Clear the terminal
+    clearTerminal();
+    
     // Install dependencies first
     await installDependencies();
     

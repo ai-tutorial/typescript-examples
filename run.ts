@@ -4,7 +4,7 @@ import { createInterface } from 'readline';
 
 const CONFIG_FILE = 'env/run.conf';
 const MAX_WAIT_TIME = 60000; // 60 seconds
-const CHECK_INTERVAL = 500; // Check every 500ms
+const CHECK_INTERVAL = 50; // Check every 50ms for faster response
 const SPINNER_INTERVAL = 100; // Update spinner every 100ms
 
 // ANSI color codes
@@ -44,6 +44,12 @@ const stopSpinner = (): void => {
 // Wait for config file to be created
 const waitForConfigFile = (): Promise<void> => {
   return new Promise((resolve, reject) => {
+    // Check immediately first (file might already exist)
+    if (existsSync(CONFIG_FILE)) {
+      resolve();
+      return;
+    }
+    
     const startTime = Date.now();
     startSpinner();
     

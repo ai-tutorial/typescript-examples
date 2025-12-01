@@ -8,68 +8,65 @@
 
 import OpenAI from 'openai';
 import { config } from 'dotenv';
-import { join } from 'path';
-import { z } from 'zod';
+import { join, dirname } from 'path';
+import { readFile } from 'fs/promises';
+import { fileURLToPath } from 'url';
+import Ajv from 'ajv';
 import * as readline from 'readline';
 
 // Load environment variables from env/.env
 config({ path: join(process.cwd(), 'env', '.env') });
 
 // Setup
-const MODEL = 'gpt-4o-mini';
+const MODEL: string = process.env.OPENAI_MODEL!;
 
 /**
- * Define Contract schema using Zod (TypeScript equivalent of Pydantic)
- * This schema enforces the structure of contract extraction output
+ * Contract type definition
  */
-const ContractSchema = z.object({
-    parties: z.array(z.string()),
-    key_dates: z.array(z.string()),
-    obligations: z.array(z.string()),
-    risk_flags: z.array(z.string()),
-    summary: z.string(),
-}).strict(); // equivalent to Pydantic's extra="forbid"
+type Contract = {
+    parties: string[];
+    key_dates: string[];
+    obligations: string[];
+    risk_flags: string[];
+    summary: string;
+};
 
 /**
- * Generate JSON Schema for downstream prompt/validation
- * Zod can convert to JSON Schema format
+ * JSON Schema type definition
  */
-function getContractJsonSchema() {
-    // Convert Zod schema to JSON Schema
-    const jsonSchema = {
-        type: 'object',
-        properties: {
-            parties: {
-                type: 'array',
-                items: { type: 'string' },
-            },
-            key_dates: {
-                type: 'array',
-                items: { type: 'string' },
-            },
-            obligations: {
-                type: 'array',
-                items: { type: 'string' },
-            },
-            risk_flags: {
-                type: 'array',
-                items: { type: 'string' },
-            },
-            summary: {
-                type: 'string',
-            },
-        },
-        required: ['parties', 'key_dates', 'obligations', 'risk_flags', 'summary'],
-        additionalProperties: false, // equivalent to extra="forbid"
-    };
-    return jsonSchema;
+type JsonSchema = {
+    type: 'object';
+    properties: Record<string, { type: string; items?: { type: string } }>;
+    required: string[];
+    additionalProperties: boolean;
+};
+
+/**
+ * Load JSON Schema from file
+ */
+async function loadContractJsonSchema(): Promise<JsonSchema> {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const schemaPath = join(__dirname, 'contract-schema.json');
+    const schemaContent = await readFile(schemaPath, 'utf-8');
+    return JSON.parse(schemaContent) as JsonSchema;
 }
 
-const CONTRACT_SCHEMA = getContractJsonSchema();
-console.log('contract_schema', JSON.stringify(CONTRACT_SCHEMA, null, 2));
+/**
+ * Validate contract data against JSON schema using Ajv
+ */
+function validateContract(data: unknown, schema: JsonSchema): Contract {
+    const ajv = new Ajv();
+    const validate = ajv.compile(schema);
+    if (validate(data)) {
+        return data as Contract;
+    } else {
+        throw new Error(`Schema validation failed: ${JSON.stringify(validate.errors, null, 2)}`);
+    }
+}
 
 // Sample contract text for extraction
-const contractText = `
+const contractText: string = `
 This Services Agreement is effective January 15, 2025.
 Provider delivers monthly support; Client pays $5,000 net 30.
 Liability limited to last 3 months fees.
@@ -81,45 +78,29 @@ Liability limited to last 3 months fees.
  * This approach includes the JSON schema in the prompt itself,
  * instructing the model to follow the schema structure.
  */
-async function enforceSchemaInPrompt() {
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const prompt = `Extract contract information from the following text. Return a JSON object matching this schema:
-${JSON.stringify(CONTRACT_SCHEMA, null, 2)}
+async function enforceSchemaInPrompt(client: OpenAI, schema: JsonSchema): Promise<Contract> {
+    const prompt: string = `Extract contract information from the following text. Return a JSON object matching this schema:
+${JSON.stringify(schema, null, 2)}
 
 Contract text:
 ${contractText}
 
 Return only valid JSON matching the schema above.`;
 
-    try {
-        const response = await client.chat.completions.create({
-            model: MODEL,
-            messages: [{ role: 'user', content: prompt }],
-            response_format: { type: 'json_object' }, // Force JSON output
-        });
+    const response = await client.chat.completions.create({
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' }, // Force JSON output
+    });
 
-        const content = response.choices[0].message.content;
-        if (!content) {
-            throw new Error('No content in response');
-        }
+    const content: string = response.choices[0].message.content!;
+    const parsed: unknown = JSON.parse(content);
+    const validated: Contract = validateContract(parsed, schema);
 
-        const parsed = JSON.parse(content);
+    console.log('\nSchema validation: OK');
+    console.log(JSON.stringify(validated, null, 2));
 
-        // Validate using Zod
-        const validated = ContractSchema.parse(parsed);
-
-        console.log('\nSchema validation: OK');
-        console.log(JSON.stringify(validated, null, 2));
-
-        return validated;
-    } catch (error) {
-        console.log('\nSchema validation: Failed');
-        console.error(error);
-        throw error;
-    }
+    return validated;
 }
 
 /**
@@ -131,48 +112,33 @@ Return only valid JSON matching the schema above.`;
  * 
  * Try changing the model to see how different models handle structured outputs.
  */
-async function useStructuredOutputs() {
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+async function useStructuredOutputs(client: OpenAI, schema: JsonSchema): Promise<Contract> {
+    const prompt: string =
+        `Extract contract information from the following text.
+    Return a JSON object with the following structure:
+    - parties: array of party names
+    - key_dates: array of important dates
+    - obligations: array of obligations
+    - risk_flags: array of risk flags or concerning clauses
+    - summary: brief summary of the contract
+
+        Contract text:
+    ${contractText}`;
+
+    const response = await client.chat.completions.create({
+        model: MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' }, // Structured output mode
     });
 
-    const prompt = `Extract contract information from the following text.
-Return a JSON object with the following structure:
-- parties: array of party names
-- key_dates: array of important dates
-- obligations: array of obligations
-- risk_flags: array of risk flags or concerning clauses
-- summary: brief summary of the contract
+    const content: string = response.choices[0].message.content!;
+    const parsed: unknown = JSON.parse(content);
+    const result: Contract = validateContract(parsed, schema);
 
-Contract text:
-${contractText}`;
+    console.log('\nSchema validation: OK');
+    console.log(JSON.stringify(result, null, 2));
 
-    try {
-        const response = await client.chat.completions.create({
-            model: MODEL,
-            messages: [{ role: 'user', content: prompt }],
-            response_format: { type: 'json_object' }, // Structured output mode
-        });
-
-        const content = response.choices[0].message.content;
-        if (!content) {
-            throw new Error('No content in response');
-        }
-
-        const parsed = JSON.parse(content);
-
-        // Validate using Zod
-        const validated = ContractSchema.parse(parsed);
-
-        console.log('\nSchema validation: OK');
-        console.log(JSON.stringify(validated, null, 2));
-
-        return validated;
-    } catch (error) {
-        console.log('\nSchema validation: Failed');
-        console.error(error);
-        throw error;
-    }
+    return result;
 }
 
 /**
@@ -221,14 +187,21 @@ function waitForEnter(message: string = 'Press Enter to continue...'): Promise<v
     });
 }
 
-async function main() {
+async function main(): Promise<void> {
+    const CONTRACT_SCHEMA: JsonSchema = await loadContractJsonSchema();
+    console.log('contract_schema', JSON.stringify(CONTRACT_SCHEMA, null, 2));
+
+    const client: OpenAI = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+
     console.log('=== Approach 1: Enforcing schema in prompt ===\n');
-    await enforceSchemaInPrompt();
+    await enforceSchemaInPrompt(client, CONTRACT_SCHEMA);
 
     await waitForEnter('\nPress Enter to continue to the next approach...');
 
     console.log('\n\n=== Approach 2: Using structured outputs (JSON mode) ===\n');
-    await useStructuredOutputs();
+    await useStructuredOutputs(client, CONTRACT_SCHEMA);
 
     await waitForEnter('\nPress Enter to exit...');
 }

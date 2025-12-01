@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "properties": {
+    "parties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "key_dates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "risk_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string"
+    }
+  },
+  "required": ["parties", "key_dates", "obligations", "risk_flags", "summary"],
+  "additionalProperties": false
+}
+

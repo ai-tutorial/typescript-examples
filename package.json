@@ -8,7 +8,8 @@
     "postinstall": "chmod +x run.sh welcome.sh && sh welcome.sh"
   },
   "stackblitz": {
-    "installDependencies": true
+    "installDependencies": true,
+    "startCommand": "sh welcome.sh"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",

@@ -48,10 +48,11 @@ This project is designed to accompany the [AI Tutorial](https://aitutorial.dev) 
 typescript-examples/
 ├── src/
 │   └── module1/
-│       ├── hello_world.ts              # Basic OpenAI API usage
-│       ├── structure_prompt_json.ts    # Structured outputs with JSON schemas
-│       ├── structure_prompt_xml.ts     # Structured outputs with XML schemas
-│       └── structured_prompt_anatomy.ts # Prompt engineering fundamentals
+│       ├── hello_world.ts                              # Basic OpenAI API usage
+│       ├── structured_outputs_schema_in_prompt.ts     # Structured outputs - Schema in prompt
+│       ├── structured_outputs_json_mode.ts            # Structured outputs - JSON mode
+│       ├── structure_prompt_xml.ts                     # Structured outputs with XML schemas
+│       └── structured_prompt_anatomy.ts                # Prompt engineering fundamentals
 ├── env/
 │   └── .env                            # Your API keys (not in git)
 ├── run.ts                              # Interactive runner script
@@ -69,13 +70,18 @@ A simple example showing how to make your first API call to OpenAI.
 - Making a basic chat completion request
 - Handling responses
 
-### 2. Structured Outputs with JSON (`structure_prompt_json.ts`)
-Demonstrates how to use JSON schemas to get structured, validated outputs from the API.
+### 2. Structured Outputs with JSON
+
+Two approaches to getting structured, validated outputs from the API:
+
+- **Schema in Prompt** (`structured_outputs_schema_in_prompt.ts`) - Includes the JSON schema in the prompt itself
+- **JSON Mode** (`structured_outputs_json_mode.ts`) - Uses OpenAI's structured outputs feature
 
 **Key concepts:**
 - Defining JSON schemas
 - Schema validation with Ajv
 - Error handling for invalid responses
+- Comparing different approaches to structured outputs
 
 ### 3. Structured Outputs with XML (`structure_prompt_xml.ts`)
 Shows how to use XML schemas for structured outputs.
@@ -224,7 +230,7 @@ Each example file includes:
 
 1. **Start here:** `hello_world.ts` - Get familiar with basic API usage
 2. **Next:** `structured_prompt_anatomy.ts` - Learn prompt engineering
-3. **Then:** `structure_prompt_json.ts` - Master structured outputs
+3. **Then:** `structured_outputs_schema_in_prompt.ts` and `structured_outputs_json_mode.ts` - Master structured outputs
 4. **Advanced:** `structure_prompt_xml.ts` - Explore XML alternatives
 
 ## Resources

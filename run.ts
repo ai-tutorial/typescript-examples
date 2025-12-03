@@ -41,37 +41,39 @@ const stopSpinner = (): void => {
   process.stdout.write('\r' + ' '.repeat(50) + '\r'); // Clear spinner line
 };
 
-// Install dependencies
-const installDependencies = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // Check if package.json exists
-    if (!existsSync('package.json')) {
-      resolve(); // No package.json, skip install
-      return;
-    }
-    
-    startSpinner('Installing dependencies...');
-    
-    try {
-      execSync('npm install', { stdio: 'pipe' });
-      stopSpinner();
-      console.log(colors.green + '✓ Dependencies installed' + colors.reset);
-      resolve();
-    } catch (error) {
-      stopSpinner();
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(colors.yellow + `⚠ Warning: Failed to install dependencies: ${errorMessage}` + colors.reset);
-      // Don't fail the script if npm install fails, just warn
-      resolve();
-    }
-  });
-};
+// Note: Dependencies are installed by StackBlitz before running the start command
+// This script only handles waiting for config and executing
 
-// Wait for config file to be created
+// Wait for config file to be created and readable
 const waitForConfigFile = (): Promise<void> => {
   return new Promise((resolve, reject) => {
-    // Check immediately first (file might already exist)
-    if (existsSync(CONFIG_FILE)) {
+    // Helper function to verify file is readable and has content
+    const isFileReady = (): boolean => {
+      if (!existsSync(CONFIG_FILE)) {
+        return false;
+      }
+      
+      try {
+        // Try to read the file to ensure it's fully written and accessible
+        const content = readFileSync(CONFIG_FILE, 'utf-8');
+        // Verify file has content and contains the expected format
+        if (content.trim().length === 0) {
+          return false;
+        }
+        // Check if it contains the expected file= parameter
+        if (content.includes('file=')) {
+          return true;
+        }
+      } catch (error) {
+        // File exists but can't be read yet (might still be writing)
+        return false;
+      }
+      
+      return false;
+    };
+    
+    // Check immediately first (file might already exist and be ready)
+    if (isFileReady()) {
       resolve();
       return;
     }
@@ -80,12 +82,12 @@ const waitForConfigFile = (): Promise<void> => {
     startSpinner('Waiting for config file...');
     
     const checkFile = (): void => {
-      if (existsSync(CONFIG_FILE)) {
+      if (isFileReady()) {
         stopSpinner();
         resolve();
       } else if (Date.now() - startTime > MAX_WAIT_TIME) {
         stopSpinner();
-        reject(new Error(`Timeout waiting for ${CONFIG_FILE} to be created`));
+        reject(new Error(`Timeout waiting for ${CONFIG_FILE} to be created and readable`));
       } else {
         setTimeout(checkFile, CHECK_INTERVAL);
       }
@@ -209,9 +211,8 @@ const askRunAgain = (): Promise<void> => {
 // Main function
 const main = async (): Promise<void> => {
   try {
-    // Install dependencies first
-    await installDependencies();
-    
+    // StackBlitz handles dependency installation before running this script
+    // We're now in "Running start command" phase
     await waitForConfigFile();
     
     const filePath = readConfigFile();

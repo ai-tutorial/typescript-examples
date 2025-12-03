@@ -4,7 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "tsx run.ts"
+    "start": "tsx run.ts",
+    "postinstall": "echo 'Dependencies installed successfully'"
+  },
+  "stackblitz": {
+    "installDependencies": true,
+    "startCommand": "npm start"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",

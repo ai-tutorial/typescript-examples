@@ -14,12 +14,18 @@ const colors = {
 const readConfigFile = (): string => {
   try {
     if (!existsSync(CONFIG_FILE)) {
+      console.error(colors.red + `\n✗ Config file not found: ${CONFIG_FILE}` + colors.reset);
+      console.error(colors.red + '\nThe environment initialization appears to be corrupted.' + colors.reset);
+      console.error(colors.red + 'Please reload the page to reinitialize the environment.\n' + colors.reset);
       throw new Error(`Config file not found: ${CONFIG_FILE}`);
     }
     
     const content = readFileSync(CONFIG_FILE, 'utf-8');
     
     if (content.trim().length === 0) {
+      console.error(colors.red + `\n✗ Config file is empty: ${CONFIG_FILE}` + colors.reset);
+      console.error(colors.red + '\nThe environment initialization appears to be corrupted.' + colors.reset);
+      console.error(colors.red + 'Please reload the page to reinitialize the environment.\n' + colors.reset);
       throw new Error(`Config file is empty: ${CONFIG_FILE}`);
     }
     

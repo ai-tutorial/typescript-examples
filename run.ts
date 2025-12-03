@@ -211,11 +211,38 @@ const askRunAgain = (): Promise<void> => {
 // Main function
 const main = async (): Promise<void> => {
   try {
-    // StackBlitz handles dependency installation before running this script
-    // We're now in "Running start command" phase
-    await waitForConfigFile();
+    // Check if file path is provided as command line argument
+    let filePath: string | null = null;
+    if (process.argv.length > 2) {
+      filePath = process.argv[2];
+    }
     
-    const filePath = readConfigFile();
+    // If no argument provided, try to read from config file
+    if (!filePath) {
+      // Check if config file exists and is readable
+      if (existsSync(CONFIG_FILE)) {
+        try {
+          const content = readFileSync(CONFIG_FILE, 'utf-8');
+          if (content.trim().length > 0 && content.includes('file=')) {
+            // File exists and is ready, read it
+            filePath = readConfigFile();
+            console.log(colors.green + `✓ Config file found: ${filePath}` + colors.reset);
+          } else {
+            // File exists but is empty or invalid, use default
+            filePath = 'src/module1/hello_world.ts';
+            console.log(colors.yellow + `Config file exists but is empty. Using default: ${filePath}` + colors.reset);
+          }
+        } catch (error) {
+          // File exists but can't be read, use default
+          filePath = 'src/module1/hello_world.ts';
+          console.log(colors.yellow + `Cannot read config file. Using default: ${filePath}` + colors.reset);
+        }
+      } else {
+        // Use default file if config doesn't exist
+        filePath = 'src/module1/hello_world.ts';
+        console.log(colors.yellow + `No config file found. Using default: ${filePath}` + colors.reset);
+      }
+    }
     
     // Loop to allow running multiple times
     while (true) {

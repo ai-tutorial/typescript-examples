@@ -6,6 +6,6 @@ clear
 echo "✓ Dependencies installed successfully!"
 echo ""
 echo "To execute the example, run:"
-echo "  sh run.sh"
+echo "  ./run.sh"
 echo ""
 

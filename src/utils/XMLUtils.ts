@@ -24,39 +24,31 @@ export class XMLUtils {
      * @returns Promise that resolves to the XML schema content as string
      */
     static async loadXmlSchema(filename: string): Promise<string> {
-        // Get caller's file path from stack trace
-        // Look for the first file that's not this utility file
-        const stack = new Error().stack;
-        if (!stack) {
-            throw new Error('Could not access stack trace');
-        }
-        
+        const stack = new Error().stack || '';
         const stackLines = stack.split('\n');
-        let callerPath: string | null = null;
         
-        // Find the first stack frame that's not this file (XMLUtils.ts)
+        // Find caller file (skip utility files and bundled files)
+        let callerPath: string | null = null;
         for (const line of stackLines) {
             const match = line.match(/at .* \((.+):\d+:\d+\)/) || line.match(/at (.+):\d+:\d+/);
-            if (match && match[1] && !match[1].includes('XMLUtils.ts') && !match[1].includes('blitz.')) {
+            if (match?.[1] && !match[1].includes('XMLUtils.ts') && !match[1].includes('blitz.')) {
                 callerPath = match[1];
                 break;
             }
         }
         
         if (!callerPath) {
-            throw new Error('Could not determine caller file path from stack trace');
+            throw new Error('Could not determine caller file path');
         }
         
-        // Handle file:// or file: protocol prefix (common in browser/Node.js environments)
+        // Handle file: protocol prefix
         if (callerPath.startsWith('file://')) {
             callerPath = fileURLToPath(callerPath);
         } else if (callerPath.startsWith('file:')) {
-            // Handle malformed file: URLs (e.g., file:/path instead of file:///path)
             callerPath = callerPath.replace(/^file:/, '');
         }
         
-        const __dirname = dirname(callerPath);
-        const schemaPath = join(__dirname, filename);
+        const schemaPath = join(dirname(callerPath), filename);
         const schemaContent = await readFile(schemaPath, 'utf-8');
         return schemaContent;
     }

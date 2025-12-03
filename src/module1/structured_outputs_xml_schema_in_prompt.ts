@@ -53,7 +53,7 @@ async function main(): Promise<void> {
 This Services Agreement is effective January 15, 2025.
 Provider delivers monthly support; Client pays $5,000 net 30.
 Liability limited to last 3 months fees.
-`.trim();
+`;
 
     // Step 2: Create prompt with schema included
     // This approach includes the XML schema and example in the prompt itself,

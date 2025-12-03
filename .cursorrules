@@ -1,4 +1,8 @@
 Functions must declare return types.
 
+## Mintlyfe Component Limitations
+
+Components cannot import other components from external files. This is a limitation of Mintlyfe. The way to decompose components is that they must reside in the same file. Only one export is allowed per file.
+
 
 

@@ -29,7 +29,14 @@ export class JSONUtils {
         if (!callerMatch) {
             throw new Error('Could not determine caller file path');
         }
-        const callerPath = callerMatch[1];
+        let callerPath = callerMatch[1];
+        // Handle file:// or file: protocol prefix (common in browser/Node.js environments)
+        if (callerPath.startsWith('file://')) {
+            callerPath = fileURLToPath(callerPath);
+        } else if (callerPath.startsWith('file:')) {
+            // Handle malformed file: URLs (e.g., file:/path instead of file:///path)
+            callerPath = callerPath.replace(/^file:/, '');
+        }
         const __dirname = dirname(callerPath);
         const schemaPath = join(__dirname, filename);
         const schemaContent = await readFile(schemaPath, 'utf-8');

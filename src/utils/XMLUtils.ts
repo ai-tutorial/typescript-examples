@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { XMLParser } from 'fast-xml-parser';
 
 /**
@@ -29,7 +30,14 @@ export class XMLUtils {
         if (!callerMatch) {
             throw new Error('Could not determine caller file path');
         }
-        const callerPath = callerMatch[1];
+        let callerPath = callerMatch[1];
+        // Handle file:// or file: protocol prefix (common in browser/Node.js environments)
+        if (callerPath.startsWith('file://')) {
+            callerPath = fileURLToPath(callerPath);
+        } else if (callerPath.startsWith('file:')) {
+            // Handle malformed file: URLs (e.g., file:/path instead of file:///path)
+            callerPath = callerPath.replace(/^file:/, '');
+        }
         const __dirname = dirname(callerPath);
         const schemaPath = join(__dirname, filename);
         const schemaContent = await readFile(schemaPath, 'utf-8');
@@ -42,7 +50,7 @@ export class XMLUtils {
      * @returns Clean XML string
      */
     static extractXmlFromMarkdown(content: string): string {
-        let xmlContent = content.trim();
+        let xmlContent = content;
         if (xmlContent.startsWith('```xml')) {
             xmlContent = xmlContent.replace(/^```xml\s*/, '').replace(/\s*```$/, '');
         } else if (xmlContent.startsWith('```')) {
@@ -80,16 +88,16 @@ export class XMLUtils {
         const normalizeArray = (value: any): string[] => {
             if (!value) return [];
             if (Array.isArray(value)) {
-                return value.map((v) => String(v).trim()).filter(Boolean);
+                return value.map((v) => String(v)).filter(Boolean);
             }
-            return [String(value).trim()].filter(Boolean);
+            return [String(value)].filter(Boolean);
         };
 
         const parties = normalizeArray(contract.parties?.party);
         const key_dates = normalizeArray(contract.key_dates?.date);
         const obligations = normalizeArray(contract.obligations?.obligation);
         const risk_flags = normalizeArray(contract.risk_flags?.risk_flag);
-        const summary = String(contract.summary || '').trim();
+        const summary = String(contract.summary || '');
 
         return {
             parties,
@@ -119,7 +127,7 @@ export class XMLUtils {
         if (!Array.isArray(data.risk_flags) || data.risk_flags.length === 0) {
             throw new Error('risk_flags must be a non-empty array');
         }
-        if (typeof data.summary !== 'string' || data.summary.trim().length === 0) {
+        if (typeof data.summary !== 'string' || data.summary.length === 0) {
             throw new Error('summary must be a non-empty string');
         }
         return data;

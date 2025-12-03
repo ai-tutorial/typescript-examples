@@ -1,161 +1,48 @@
 import { readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
-import { createInterface } from 'readline';
 
 const CONFIG_FILE = 'env/run.conf';
-const MAX_WAIT_TIME = 60000; // 60 seconds
-const CHECK_INTERVAL = 50; // Check every 50ms for faster response
-const SPINNER_INTERVAL = 100; // Update spinner every 100ms
 
 // ANSI color codes
 const colors = {
   reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  dim: '\x1b[2m',
   red: '\x1b[31m',
   green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-};
-
-// Spinner animation
-const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-let spinnerIndex = 0;
-let spinnerInterval: NodeJS.Timeout | null = null;
-
-const startSpinner = (message: string = 'Waiting for config file...'): void => {
-  process.stdout.write('\r' + colors.cyan + spinnerFrames[spinnerIndex] + colors.reset + ' ' + message);
-  spinnerInterval = setInterval(() => {
-    spinnerIndex = (spinnerIndex + 1) % spinnerFrames.length;
-    process.stdout.write('\r' + colors.cyan + spinnerFrames[spinnerIndex] + colors.reset + ' ' + message);
-  }, SPINNER_INTERVAL);
-};
-
-const stopSpinner = (): void => {
-  if (spinnerInterval) {
-    clearInterval(spinnerInterval);
-    spinnerInterval = null;
-  }
-  process.stdout.write('\r' + ' '.repeat(50) + '\r'); // Clear spinner line
-};
-
-// Note: Dependencies are installed by StackBlitz before running the start command
-// This script only handles waiting for config and executing
-
-// Wait for config file to be created and readable
-const waitForConfigFile = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // Helper function to verify file is readable and has content
-    const isFileReady = (): boolean => {
-      if (!existsSync(CONFIG_FILE)) {
-        return false;
-      }
-      
-      try {
-        // Try to read the file to ensure it's fully written and accessible
-        const content = readFileSync(CONFIG_FILE, 'utf-8');
-        // Verify file has content and contains the expected format
-        if (content.trim().length === 0) {
-          return false;
-        }
-        // Check if it contains the expected file= parameter
-        if (content.includes('file=')) {
-          return true;
-        }
-      } catch (error) {
-        // File exists but can't be read yet (might still be writing)
-        return false;
-      }
-      
-      return false;
-    };
-    
-    // Check immediately first (file might already exist and be ready)
-    if (isFileReady()) {
-      resolve();
-      return;
-    }
-    
-    const startTime = Date.now();
-    startSpinner('Waiting for config file...');
-    
-    const checkFile = (): void => {
-      if (isFileReady()) {
-        stopSpinner();
-        resolve();
-      } else if (Date.now() - startTime > MAX_WAIT_TIME) {
-        stopSpinner();
-        reject(new Error(`Timeout waiting for ${CONFIG_FILE} to be created and readable`));
-      } else {
-        setTimeout(checkFile, CHECK_INTERVAL);
-      }
-    };
-    
-    checkFile();
-  });
 };
 
 // Read config file and extract file path
 const readConfigFile = (): string => {
   try {
+    if (!existsSync(CONFIG_FILE)) {
+      throw new Error(`Config file not found: ${CONFIG_FILE}`);
+    }
+    
     const content = readFileSync(CONFIG_FILE, 'utf-8');
+    
+    if (content.trim().length === 0) {
+      throw new Error(`Config file is empty: ${CONFIG_FILE}`);
+    }
+    
     const lines = content.split('\n');
     
     for (const line of lines) {
       const trimmed = line.trim();
       if (trimmed.startsWith('file=')) {
-        return trimmed.substring(5).trim();
+        const filePath = trimmed.substring(5).trim();
+        if (filePath.length === 0) {
+          throw new Error(`File path is empty in config file: ${CONFIG_FILE}`);
+        }
+        return filePath;
       }
     }
     
-    throw new Error('No file parameter found in config');
+    throw new Error(`No file parameter found in config file: ${CONFIG_FILE}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to read config file: ${errorMessage}`);
   }
 };
 
-// Ask user to press enter or ESC
-const waitForEnter = (filePath: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const rl = createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-    
-    // Enable raw mode to capture ESC key
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    process.stdin.setEncoding('utf8');
-    
-    const handleKeypress = (key: string): void => {
-      // ESC key (27) or 'q' key
-      if (key === '\u001b' || key === '\u0003' || key === 'q' || key === 'Q') {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        rl.close();
-        console.log(colors.yellow + '\nReturning to terminal...' + colors.reset);
-        reject(new Error('User cancelled'));
-        return;
-      }
-      
-      // Enter key
-      if (key === '\r' || key === '\n') {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        rl.close();
-        resolve();
-        return;
-      }
-    };
-    
-    process.stdin.on('data', handleKeypress);
-    
-    process.stdout.write(colors.bright + `\nPress enter to execute ${colors.cyan}${filePath}${colors.reset}${colors.bright} (or ESC to return to terminal):${colors.reset}\n`);
-  });
-};
 
 // Execute the file
 const executeFile = (filePath: string): void => {
@@ -169,47 +56,8 @@ const executeFile = (filePath: string): void => {
   }
 };
 
-// Ask if user wants to run again
-const askRunAgain = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const rl = createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
-    
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    process.stdin.setEncoding('utf8');
-    
-    const handleKeypress = (key: string): void => {
-      // ESC key or 'q' to exit
-      if (key === '\u001b' || key === '\u0003' || key === 'q' || key === 'Q') {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        rl.close();
-        console.log(colors.yellow + '\nExiting...' + colors.reset);
-        reject(new Error('User cancelled'));
-        return;
-      }
-      
-      // Enter key to run again
-      if (key === '\r' || key === '\n') {
-        process.stdin.setRawMode(false);
-        process.stdin.pause();
-        rl.close();
-        resolve();
-        return;
-      }
-    };
-    
-    process.stdin.on('data', handleKeypress);
-    
-    process.stdout.write(colors.bright + `\nPress enter to run again (or ESC to exit):${colors.reset}\n`);
-  });
-};
-
 // Main function
-const main = async (): Promise<void> => {
+const main = (): void => {
   try {
     // Check if file path is provided as command line argument
     let filePath: string | null = null;
@@ -217,60 +65,14 @@ const main = async (): Promise<void> => {
       filePath = process.argv[2];
     }
     
-    // If no argument provided, try to read from config file
+    // If no argument provided, read from config file
     if (!filePath) {
-      // Check if config file exists and is readable
-      if (existsSync(CONFIG_FILE)) {
-        try {
-          const content = readFileSync(CONFIG_FILE, 'utf-8');
-          if (content.trim().length > 0 && content.includes('file=')) {
-            // File exists and is ready, read it
-            filePath = readConfigFile();
-            console.log(colors.green + `✓ Config file found: ${filePath}` + colors.reset);
-          } else {
-            // File exists but is empty or invalid, use default
-            filePath = 'src/module1/hello_world.ts';
-            console.log(colors.yellow + `Config file exists but is empty. Using default: ${filePath}` + colors.reset);
-          }
-        } catch (error) {
-          // File exists but can't be read, use default
-          filePath = 'src/module1/hello_world.ts';
-          console.log(colors.yellow + `Cannot read config file. Using default: ${filePath}` + colors.reset);
-        }
-      } else {
-        // Use default file if config doesn't exist
-        filePath = 'src/module1/hello_world.ts';
-        console.log(colors.yellow + `No config file found. Using default: ${filePath}` + colors.reset);
-      }
+      filePath = readConfigFile();
     }
     
-    // Loop to allow running multiple times
-    while (true) {
-      try {
-        await waitForEnter(filePath);
-        executeFile(filePath);
-        
-        // Ask if user wants to run again
-        try {
-          await askRunAgain();
-          // If user pressed enter, loop continues
-        } catch (error) {
-          // User pressed ESC, exit
-          if (error instanceof Error && error.message === 'User cancelled') {
-            process.exit(0);
-          }
-          throw error;
-        }
-      } catch (error) {
-        // User pressed ESC during waitForEnter
-        if (error instanceof Error && error.message === 'User cancelled') {
-          process.exit(0);
-        }
-        throw error;
-      }
-    }
+    // Execute the file directly
+    executeFile(filePath);
   } catch (error) {
-    stopSpinner();
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error(colors.red + `\n✗ Error: ${errorMessage}` + colors.reset);
     process.exit(1);
@@ -278,4 +80,3 @@ const main = async (): Promise<void> => {
 };
 
 main();
-

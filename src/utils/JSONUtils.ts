@@ -24,12 +24,28 @@ export class JSONUtils {
      */
     static async loadJsonSchema(filename: string): Promise<JsonSchema> {
         // Get caller's file path from stack trace
+        // Look for the first file that's not this utility file
         const stack = new Error().stack;
-        const callerMatch = stack?.match(/at .* \((.+):\d+:\d+\)/);
-        if (!callerMatch) {
-            throw new Error('Could not determine caller file path');
+        if (!stack) {
+            throw new Error('Could not access stack trace');
         }
-        let callerPath = callerMatch[1];
+        
+        const stackLines = stack.split('\n');
+        let callerPath: string | null = null;
+        
+        // Find the first stack frame that's not this file (JSONUtils.ts)
+        for (const line of stackLines) {
+            const match = line.match(/at .* \((.+):\d+:\d+\)/) || line.match(/at (.+):\d+:\d+/);
+            if (match && match[1] && !match[1].includes('JSONUtils.ts') && !match[1].includes('blitz.')) {
+                callerPath = match[1];
+                break;
+            }
+        }
+        
+        if (!callerPath) {
+            throw new Error('Could not determine caller file path from stack trace');
+        }
+        
         // Handle file:// or file: protocol prefix (common in browser/Node.js environments)
         if (callerPath.startsWith('file://')) {
             callerPath = fileURLToPath(callerPath);
@@ -37,6 +53,7 @@ export class JSONUtils {
             // Handle malformed file: URLs (e.g., file:/path instead of file:///path)
             callerPath = callerPath.replace(/^file:/, '');
         }
+        
         const __dirname = dirname(callerPath);
         const schemaPath = join(__dirname, filename);
         const schemaContent = await readFile(schemaPath, 'utf-8');

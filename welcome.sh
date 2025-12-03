@@ -1,11 +1,11 @@
 #!/bin/sh
 # Welcome script that displays after dependencies are installed
-# Clears the screen and shows instructions with colors
+# Clears the screen and shows instructions
 
 clear
-echo '\033[32m✓ Dependencies installed successfully!\033[0m'
-echo ''
-echo '\033[36mTo execute the example, run:\033[0m'
-echo '\033[1m  sh run.sh\033[0m'
-echo ''
+echo "✓ Dependencies installed successfully!"
+echo ""
+echo "To execute the example, run:"
+echo "  sh run.sh"
+echo ""
 

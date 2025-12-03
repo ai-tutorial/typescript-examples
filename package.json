@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "run": "sh run.sh",
-    "postinstall": "sh welcome.sh"
+    "postinstall": "chmod +x run.sh welcome.sh && sh welcome.sh"
   },
   "stackblitz": {
     "installDependencies": true

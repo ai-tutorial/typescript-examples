@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "tsx run.ts",
-    "postinstall": "echo 'Dependencies installed successfully'"
+    "start": "npm install",
+    "postinstall": "tsx run.ts"
   },
   "stackblitz": {
     "installDependencies": true,

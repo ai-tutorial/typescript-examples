@@ -49,9 +49,10 @@ typescript-examples/
 ├── src/
 │   └── module1/
 │       ├── hello_world.ts                              # Basic OpenAI API usage
-│       ├── structured_outputs_schema_in_prompt.ts     # Structured outputs - Schema in prompt
-│       ├── structured_outputs_json_mode.ts            # Structured outputs - JSON mode
-│       ├── structure_prompt_xml.ts                     # Structured outputs with XML schemas
+│       ├── structured_outputs_schema_in_prompt.ts      # Structured outputs - Schema in prompt (JSON)
+│       ├── structured_outputs_json_mode.ts             # Structured outputs - JSON mode
+│       ├── structured_outputs_xml_schema_in_prompt.ts  # Structured outputs - Schema in prompt (XML)
+│       ├── structured_outputs_xml_mode.ts              # Structured outputs - XML mode
 │       └── structured_prompt_anatomy.ts                # Prompt engineering fundamentals
 ├── env/
 │   └── .env                            # Your API keys (not in git)
@@ -83,13 +84,18 @@ Two approaches to getting structured, validated outputs from the API:
 - Error handling for invalid responses
 - Comparing different approaches to structured outputs
 
-### 3. Structured Outputs with XML (`structure_prompt_xml.ts`)
-Shows how to use XML schemas for structured outputs.
+### 3. Structured Outputs with XML
+
+Two approaches to getting structured, validated outputs using XML:
+
+- **Schema in Prompt** (`structured_outputs_xml_schema_in_prompt.ts`) - Includes the XML schema in the prompt itself
+- **XML Mode** (`structured_outputs_xml_mode.ts`) - Uses prompt instructions to request XML output
 
 **Key concepts:**
 - XML schema definitions
 - XML parsing and validation
 - Alternative to JSON schemas
+- Comparing different approaches to structured outputs
 
 ### 4. Structured Prompt Anatomy (`structured_prompt_anatomy.ts`)
 Teaches the fundamentals of prompt engineering with structured components.
@@ -230,8 +236,8 @@ Each example file includes:
 
 1. **Start here:** `hello_world.ts` - Get familiar with basic API usage
 2. **Next:** `structured_prompt_anatomy.ts` - Learn prompt engineering
-3. **Then:** `structured_outputs_schema_in_prompt.ts` and `structured_outputs_json_mode.ts` - Master structured outputs
-4. **Advanced:** `structure_prompt_xml.ts` - Explore XML alternatives
+3. **Then:** `structured_outputs_schema_in_prompt.ts` and `structured_outputs_json_mode.ts` - Master structured outputs (JSON)
+4. **Advanced:** `structured_outputs_xml_schema_in_prompt.ts` and `structured_outputs_xml_mode.ts` - Explore XML alternatives
 
 ## Resources
 

@@ -4,11 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "postinstall": "sh run.sh"
+    "run": "sh run.sh"
   },
   "stackblitz": {
     "installDependencies": true,
-    "startCommand": "tsx run.ts"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",

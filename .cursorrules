@@ -1,5 +1,16 @@
 Functions must declare return types.
 
+Local variables should not have explicit type annotations. TypeScript's type inference should be used instead. For example:
+- ✅ `const result = await fetchData();` (type inferred)
+- ❌ `const result: string = await fetchData();` (explicit type not needed)
+
+Exceptions:
+- When the type cannot be inferred (e.g., empty arrays: `const items: string[] = []`)
+- When you need to explicitly narrow or widen the type for clarity
+- When documenting complex types that aren't obvious from the assignment
+
+Every file must have a `main` function as the first function (after imports and setup). The `main` function's documentation comment (JSDoc) must explain the goal and main steps of the example. The function body should demonstrate the approach by running examples. This allows users to understand the approach before diving into implementation details.
+
 ## Mintlyfe Component Limitations
 
 Components cannot import other components from external files. This is a limitation of Mintlyfe. The way to decompose components is that they must reside in the same file. Only one export is allowed per file.

@@ -1,11 +1,10 @@
 /**
  * Structured Outputs with XML Schema - Approach 1: Schema in Prompt
  * 
- * This approach includes the XML schema and example in the prompt itself,
- * instructing the model to follow the XML structure.
- * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
  * Module reference: `Modules/module-1.md` — Section 8.1 Structured Outputs with XML Schemas.
+ * Why: Includes the XML schema and example in the prompt itself, instructing the model
+ *      to follow the XML structure. Simpler but less reliable than programmatic validation.
  */
 
 import OpenAI from 'openai';
@@ -41,53 +40,55 @@ const EXAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
   <summary>Services Agreement for monthly support with payment terms</summary>
 </contract>`;
 
+/**
+ * Main function that demonstrates structured outputs with XML schema in prompt
+ * 
+ * This example shows how to include the XML schema directly in the prompt:
+ * 1. Load an XML schema for reference
+ * 2. Create a prompt that includes the schema and example
+ * 3. Call the API
+ * 4. Extract XML from response, parse and validate
+ * 
+ * This approach is simpler but less reliable than programmatic validation.
+ */
 async function main(): Promise<void> {
-    // Step 1: Load schema and create client
     const CONTRACT_XML_SCHEMA = await XMLUtils.loadXmlSchema('contract-schema.xml');
     const client = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Sample contract text for extraction
     const contractText = `
-This Services Agreement is effective January 15, 2025.
-Provider delivers monthly support; Client pays $5,000 net 30.
-Liability limited to last 3 months fees.
-`;
+    This Services Agreement is effective January 15, 2025.
+    Provider delivers monthly support; Client pays $5,000 net 30.
+    Liability limited to last 3 months fees.
+    `;
 
-    // Step 2: Create prompt with schema included
-    // This approach includes the XML schema and example in the prompt itself,
-    // instructing the model to follow the XML structure.
     const prompt = `Extract contract information from the following text. Return a valid XML document matching this structure:
 
-${EXAMPLE_XML}
+    ${EXAMPLE_XML}
 
-The XML must follow this schema:
-${CONTRACT_XML_SCHEMA}
+    The XML must follow this schema:
+    ${CONTRACT_XML_SCHEMA}
 
-Contract text:
-${contractText}
+    Contract text:
+    ${contractText}
 
-Return only valid XML matching the schema above. Do not include any text outside the XML tags.`;
+    Return only valid XML matching the schema above. Do not include any text outside the XML tags.`;
 
-    // Step 3: Call LLM API
     const response = await client.chat.completions.create({
         model: MODEL,
         messages: [{ role: 'user', content: prompt }],
     });
 
-    // Step 4: Extract, parse and validate response
     const content = response.choices[0].message.content!;
     const xmlContent = XMLUtils.extractXmlFromMarkdown(content);
     const parsed = XMLUtils.parseContractXml(xmlContent);
     const validated = XMLUtils.validateContract(parsed);
 
-    // Step 5: Output results
-    console.log('\nXML validation: OK');
+    console.log('--- XML validation: OK ---');
     console.log('Parsed contract:', JSON.stringify(validated, null, 2));
     console.log('\nRaw XML response:');
     console.log(xmlContent);
 }
 
-main().catch(console.error);
-
+await main();

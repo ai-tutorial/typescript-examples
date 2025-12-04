@@ -1,13 +1,10 @@
 /**
  * Structured Outputs with XML Schema - Approach 2: Structured Outputs (XML Mode)
  * 
- * This approach uses prompt instructions to request XML output
- * combined with XML parsing and validation. Note that OpenAI's API
- * doesn't have a native XML response format like json_object, so we
- * rely on prompt engineering and parsing.
- * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
  * Module reference: `Modules/module-1.md` — Section 8.1 Structured Outputs with XML Schemas.
+ * Why: Uses prompt instructions to request XML output combined with XML parsing and validation.
+ *      Note that OpenAI's API doesn't have a native XML response format like json_object.
  */
 
 import OpenAI from 'openai';
@@ -43,58 +40,58 @@ const EXAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
   <summary>Services Agreement for monthly support with payment terms</summary>
 </contract>`;
 
+/**
+ * Main function that demonstrates structured outputs with XML mode
+ * 
+ * This example shows how to request XML output using prompt engineering:
+ * 1. Create a prompt with XML structure description and example
+ * 2. Call the API (no native XML format, so we rely on prompt engineering)
+ * 3. Extract XML from the response (may be wrapped in markdown)
+ * 4. Parse and validate the XML structure
+ * 
+ * This approach requires more parsing than JSON but provides structured output.
+ */
 async function main(): Promise<void> {
-    // Step 1: Create client
     const client = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Sample contract text for extraction
     const contractText = `
-This Services Agreement is effective January 15, 2025.
-Provider delivers monthly support; Client pays $5,000 net 30.
-Liability limited to last 3 months fees.`;
+    This Services Agreement is effective January 15, 2025.
+    Provider delivers monthly support; Client pays $5,000 net 30.
+    Liability limited to last 3 months fees.`;
 
-    // Step 2: Create prompt with structure description
-    // This approach uses prompt instructions to request XML output
-    // combined with XML parsing and validation. Note that OpenAI's API
-    // doesn't have a native XML response format like json_object, so we
-    // rely on prompt engineering and parsing.
     const prompt = `Extract contract information from the following text.
-Return a valid XML document with the following structure:
-- parties: contains party elements with party names
-- key_dates: contains date elements with important dates
-- obligations: contains obligation elements with obligations
-- risk_flags: contains risk_flag elements with risk flags or concerning clauses
-- summary: brief summary of the contract
+    Return a valid XML document with the following structure:
+    - parties: contains party elements with party names
+    - key_dates: contains date elements with important dates
+    - obligations: contains obligation elements with obligations
+    - risk_flags: contains risk_flag elements with risk flags or concerning clauses
+    - summary: brief summary of the contract
 
-Example XML structure:
-${EXAMPLE_XML}
+    Example XML structure:
+    ${EXAMPLE_XML}
 
-Contract text:
-${contractText}
+    Contract text:
+    ${contractText}
 
-Return only valid XML. Start with <?xml version="1.0" encoding="UTF-8"?> and wrap everything in a <contract> root element.`;
+    Return only valid XML. Start with <?xml version="1.0" encoding="UTF-8"?> and wrap everything in a <contract> root element.`;
 
-    // Step 3: Call LLM API with structured output mode
     const response = await client.chat.completions.create({
         model: MODEL,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3, // Lower temperature for more consistent structured output
+        temperature: 0.3,
     });
 
-    // Step 4: Extract, parse and validate response
     const content = response.choices[0].message.content!;
     const xmlContent = XMLUtils.extractXmlFromMarkdown(content);
     const parsed = XMLUtils.parseContractXml(xmlContent);
     const result = XMLUtils.validateContract(parsed);
 
-    // Step 5: Output results
-    console.log('\nXML validation: OK');
+    console.log('--- XML validation: OK ---');
     console.log('Parsed contract:', JSON.stringify(result, null, 2));
     console.log('\nRaw XML response:');
     console.log(xmlContent);
 }
 
-main().catch(console.error);
-
+await main();

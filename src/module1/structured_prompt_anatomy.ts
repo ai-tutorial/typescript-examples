@@ -15,7 +15,34 @@ import { join } from 'path';
 config({ path: join(process.cwd(), 'env', '.env') });
 
 // Setup
-const MODEL: string = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
+const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+
+/**
+ * Main function that demonstrates structured prompt engineering
+ * 
+ * This example shows two approaches to structured prompts:
+ * 1. Manual construction: Build prompts with explicit sections (Role, Context, Instructions, etc.)
+ * 2. Programmatic construction: Build prompts dynamically from components
+ * 
+ * Both approaches demonstrate the anatomy of production-ready prompts with:
+ * - Role: Defines who the AI is acting as
+ * - Context: Provides background information
+ * - Instructions: Clear step-by-step guidance
+ * - Constraints: Boundaries and limitations
+ * - Examples: Few-shot learning examples
+ * - Input: The actual user input to process
+ */
+async function main(): Promise<void> {
+    console.log('=== Structured Prompt Anatomy Demo ===\n');
+    
+    await structuredPromptExample(client);
+        
+    await programmaticStructuredPrompt(client);
+}
 
 /**
  * Structured prompt with Role, Context, Instructions, Constraints, Examples, and Input
@@ -29,41 +56,39 @@ const MODEL: string = process.env.OPENAI_MODEL || 'gpt-4o-mini';
  * - Input: The actual user input to process
  */
 async function structuredPromptExample(client: OpenAI): Promise<void> {
-    // Example customer message
-    const customerMessage: string = "Hi my order arrived late by 6 days. Can I get a refund?";
+    const customerMessage = "Hi my order arrived late by 6 days. Can I get a refund?";
 
-    // Structured prompt with all components
-    const prompt: string = `Role: You are a customer service representative for an e-commerce company.
+    const prompt = `Role: You are a customer service representative for an e-commerce company.
 
-Context: 
-- Our company policy allows refunds for orders that arrive more than 5 days late
-- We prioritize customer satisfaction and aim to resolve issues quickly
-- Standard refund processing takes 3-5 business days
+    Context: 
+    - Our company policy allows refunds for orders that arrive more than 5 days late
+    - We prioritize customer satisfaction and aim to resolve issues quickly
+    - Standard refund processing takes 3-5 business days
 
-Instructions:
-1. Acknowledge the customer's concern empathetically
-2. Verify if the order qualifies for a refund based on the delay
-3. If eligible, explain the refund process and timeline
-4. If not eligible, offer alternative solutions (partial refund, store credit, etc.)
-5. End with a clear next step
+    Instructions:
+    1. Acknowledge the customer's concern empathetically
+    2. Verify if the order qualifies for a refund based on the delay
+    3. If eligible, explain the refund process and timeline
+    4. If not eligible, offer alternative solutions (partial refund, store credit, etc.)
+    5. End with a clear next step
 
-Constraints:
-- Do not make promises about specific refund amounts without checking the order details
-- Do not offer refunds for orders that arrived within the expected timeframe
-- Always be polite and professional
-- Keep responses concise (2-3 sentences)
+    Constraints:
+    - Do not make promises about specific refund amounts without checking the order details
+    - Do not offer refunds for orders that arrived within the expected timeframe
+    - Always be polite and professional
+    - Keep responses concise (2-3 sentences)
 
-Examples:
-Customer: "My package is 7 days late"
-Response: "I'm sorry to hear about the delay. Since your order arrived more than 5 days late, you're eligible for a full refund. I'll process this for you now, and you should see the refund in your account within 3-5 business days. Would you like me to proceed?"
+    Examples:
+    Customer: "My package is 7 days late"
+    Response: "I'm sorry to hear about the delay. Since your order arrived more than 5 days late, you're eligible for a full refund. I'll process this for you now, and you should see the refund in your account within 3-5 business days. Would you like me to proceed?"
 
-Customer: "My package is 3 days late"
-Response: "I understand your concern about the delay. While your order is slightly delayed, it's still within our standard delivery window. However, I'd be happy to offer you a 20% store credit as a gesture of goodwill. Would that work for you?"
+    Customer: "My package is 3 days late"
+    Response: "I understand your concern about the delay. While your order is slightly delayed, it's still within our standard delivery window. However, I'd be happy to offer you a 20% store credit as a gesture of goodwill. Would that work for you?"
 
-Input:
-${customerMessage}
+    Input:
+    ${customerMessage}
 
-Response:`;
+    Response:`;
 
     const response = await client.chat.completions.create({
         model: MODEL,
@@ -73,17 +98,9 @@ Response:`;
         temperature: 0.7,
     });
 
-    const content: string = response.choices[0].message.content || '';
+    const content = response.choices[0].message.content || '';
     
-    // Prompt Structure Analysis:
-    // ✓ Role: Defined (customer service representative)
-    // ✓ Context: Provided (company policies and processes)
-    // ✓ Instructions: Clear (5-step process)
-    // ✓ Constraints: Specified (boundaries and limitations)
-    // ✓ Examples: Included (few-shot learning)
-    // ✓ Input: Separated (customer message clearly marked)
-    
-    console.log('\n=== Structured Prompt Example ===\n');
+    console.log('--- Structured Prompt Example ---');
     console.log('Customer Message:', customerMessage);
     console.log('\nAI Response:');
     console.log(content);
@@ -106,7 +123,7 @@ interface PromptComponents {
 }
 
 function buildStructuredPrompt(components: PromptComponents): string {
-    let prompt: string = `Role: ${components.role}\n\n`;
+    let prompt = `Role: ${components.role}\n\n`;
     
     prompt += `Context:\n${components.context}\n\n`;
     
@@ -136,14 +153,14 @@ function buildStructuredPrompt(components: PromptComponents): string {
 }
 
 async function programmaticStructuredPrompt(client: OpenAI): Promise<void> {
-    const customerMessage: string = "I received the wrong item. What should I do?";
+    const customerMessage = "I received the wrong item. What should I do?";
     
     const promptComponents: PromptComponents = {
         role: "You are a customer service representative for an e-commerce company.",
         context: `Our company policy:
-- Wrong items can be returned for a full refund or exchange
-- We provide prepaid return labels for wrong items
-- Exchanges are processed within 2-3 business days of receiving the return`,
+    - Wrong items can be returned for a full refund or exchange
+    - We provide prepaid return labels for wrong items
+    - Exchanges are processed within 2-3 business days of receiving the return`,
         instructions: [
             "Apologize for the mistake",
             "Confirm the return/exchange process",
@@ -166,7 +183,7 @@ async function programmaticStructuredPrompt(client: OpenAI): Promise<void> {
         input: customerMessage
     };
     
-    const prompt: string = buildStructuredPrompt(promptComponents);
+    const prompt = buildStructuredPrompt(promptComponents);
     
     const response = await client.chat.completions.create({
         model: MODEL,
@@ -176,16 +193,9 @@ async function programmaticStructuredPrompt(client: OpenAI): Promise<void> {
         temperature: 0.7,
     });
 
-    const content: string = response.choices[0].message.content || '';
+    const content = response.choices[0].message.content || '';
     
-    // Generated Prompt Structure:
-    // Prompt components were assembled programmatically
-    // This approach is useful for:
-    // - Dynamic prompt generation
-    // - A/B testing different prompt structures
-    // - Maintaining prompt templates in code
-    
-    console.log('\n=== Programmatic Structured Prompt ===\n');
+    console.log('--- Programmatic Structured Prompt ---');
     console.log('Customer Message:', customerMessage);
     console.log('\nAI Response:');
     console.log(content);
@@ -206,23 +216,4 @@ async function programmaticStructuredPrompt(client: OpenAI): Promise<void> {
  * 10. Version control your prompts to track changes and their impact
  */
 
-// This demo shows how to structure prompts with explicit components:
-// - Role: Who the AI is acting as
-// - Context: Background information
-// - Instructions: Step-by-step guidance
-// - Constraints: Boundaries and limitations
-// - Examples: Few-shot learning examples
-// - Input: The actual user input
-
-const client: OpenAI = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
-console.log('=== Structured Prompt Anatomy Demo ===\n');
-
-await structuredPromptExample(client);
-
-console.log('\n');
-
-await programmaticStructuredPrompt(client);
-
+await main();

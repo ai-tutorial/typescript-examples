@@ -1,35 +1,43 @@
-// Import the OpenAI SDK - this gives us access to OpenAI's API
+/**
+ * Hello World (Module 1)
+ * 
+ * Costs & Safety: Real API call; keep inputs small. Requires API key.
+ * Module reference: `Modules/module-1.md` — Introduction.
+ * Why: Basic example showing how to make a simple API call to OpenAI.
+ */
+
 import OpenAI from 'openai';
 import { config } from 'dotenv';
 import { join } from 'path';
 
 // Load environment variables from env/.env file
-// This is where your OPENAI_API_KEY is stored. 
 config({ path: join(process.cwd(), 'env', '.env') });
 
 // Create an OpenAI client instance
-// This is your connection to OpenAI's API - it handles authentication and requests
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Your API key from the .env file
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Make a request to the chat completions API
-// This is where the magic happens - you send a message and get a response
-const response = await client.chat.completions.create({
+/**
+ * Main function that demonstrates a basic OpenAI API call
+ * 
+ * This example shows the simplest way to interact with OpenAI's API:
+ * 1. Create a client with your API key
+ * 2. Send a message using chat.completions.create
+ * 3. Extract and display the response
+ */
+async function main(): Promise<void> {
+    const response = await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+            {
+                role: 'user',
+                content: 'Say hello in 4 words.'
+            }
+        ],
+    });
 
-  model: 'gpt-4o-mini',  // Which model to use: gpt-4o-mini is fast and cost-effective (recommended for learning)
-  
-  // Messages array: this is the conversation history
-  // Each message has a role (user, assistant, or system) and content
-  messages: [
-    { 
-      role: 'user',           // This is a message from the user (you)
-      content: 'Say hello in 3 words.' // The actual text you're sending
-    }
-  ],
-});
+    console.log(response.choices[0].message.content);
+}
 
-// Extract and print the response
-// The response contains an array of choices, we take the first one
-// Each choice has a message with the content (the AI's response)
-console.log(response.choices[0].message.content);
+await main();

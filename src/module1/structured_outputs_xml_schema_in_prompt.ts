@@ -2,7 +2,7 @@
  * Structured Outputs with XML Schema - Approach 1: Schema in Prompt
  * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: `Modules/module-1.md` — Section 8.1 Structured Outputs with XML Schemas.
+ * Module reference: [Example 1: Schema in Prompt](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#example-1-schema-in-prompt)
  * Why: Includes the XML schema and example in the prompt itself, instructing the model
  *      to follow the XML structure. Simpler but less reliable than programmatic validation.
  */

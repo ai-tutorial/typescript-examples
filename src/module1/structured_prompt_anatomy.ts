@@ -2,7 +2,7 @@
  * Structured Prompt Anatomy (Module 1)
  * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: `Modules/module-1.md` — Section 2.1 The Anatomy of a Production Prompt.
+ * Module reference: [The Anatomy of a Production Prompt](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#the-anatomy-of-a-production-prompt)
  * Why: Structured prompts with explicit Role, Context, Instructions, Constraints, Examples, and Input
  *      tend to reduce hallucinations and parsing errors while improving reliability in production.
  */
@@ -24,38 +24,19 @@ const client = new OpenAI({
 /**
  * Main function that demonstrates structured prompt engineering
  * 
- * This example shows two approaches to structured prompts:
- * 1. Manual construction: Build prompts with explicit sections (Role, Context, Instructions, etc.)
- * 2. Programmatic construction: Build prompts dynamically from components
+ * This example shows how to build production-ready prompts with explicit components:
+ * 1. Define the Role: Who the AI is acting as
+ * 2. Provide Context: Background information needed
+ * 3. Specify Instructions: Clear step-by-step guidance
+ * 4. Set Constraints: Boundaries and limitations
+ * 5. Include Examples: Few-shot learning examples (optional)
+ * 6. Separate Input: The actual user input to process
  * 
- * Both approaches demonstrate the anatomy of production-ready prompts with:
- * - Role: Defines who the AI is acting as
- * - Context: Provides background information
- * - Instructions: Clear step-by-step guidance
- * - Constraints: Boundaries and limitations
- * - Examples: Few-shot learning examples
- * - Input: The actual user input to process
+ * This structured approach reduces hallucinations and parsing errors while improving reliability.
  */
 async function main(): Promise<void> {
     console.log('=== Structured Prompt Anatomy Demo ===\n');
     
-    await structuredPromptExample(client);
-        
-    await programmaticStructuredPrompt(client);
-}
-
-/**
- * Structured prompt with Role, Context, Instructions, Constraints, Examples, and Input
- * 
- * This demonstrates the anatomy of a production-ready prompt that includes:
- * - Role: Defines who the AI is acting as
- * - Context: Provides background information
- * - Instructions: Clear step-by-step guidance
- * - Constraints: Boundaries and limitations
- * - Examples: Few-shot examples (optional but helpful)
- * - Input: The actual user input to process
- */
-async function structuredPromptExample(client: OpenAI): Promise<void> {
     const customerMessage = "Hi my order arrived late by 6 days. Can I get a refund?";
 
     const prompt = `Role: You are a customer service representative for an e-commerce company.
@@ -107,108 +88,13 @@ async function structuredPromptExample(client: OpenAI): Promise<void> {
 }
 
 /**
- * Alternative: Building structured prompts programmatically
- * 
- * This approach allows you to build prompts dynamically while maintaining
- * the structured format. Useful for production systems where prompts need
- * to be assembled from templates or configurations.
- */
-interface PromptComponents {
-    role: string;
-    context: string;
-    instructions: string[];
-    constraints: string[];
-    examples?: Array<{ input: string; output: string }>;
-    input: string;
-}
-
-function buildStructuredPrompt(components: PromptComponents): string {
-    let prompt = `Role: ${components.role}\n\n`;
-    
-    prompt += `Context:\n${components.context}\n\n`;
-    
-    prompt += `Instructions:\n`;
-    components.instructions.forEach((instruction, index) => {
-        prompt += `${index + 1}. ${instruction}\n`;
-    });
-    prompt += '\n';
-    
-    prompt += `Constraints:\n`;
-    components.constraints.forEach((constraint) => {
-        prompt += `- ${constraint}\n`;
-    });
-    prompt += '\n';
-    
-    if (components.examples && components.examples.length > 0) {
-        prompt += `Examples:\n`;
-        components.examples.forEach((example) => {
-            prompt += `Customer: "${example.input}"\n`;
-            prompt += `Response: "${example.output}"\n\n`;
-        });
-    }
-    
-    prompt += `Input:\n${components.input}\n\nResponse:`;
-    
-    return prompt;
-}
-
-async function programmaticStructuredPrompt(client: OpenAI): Promise<void> {
-    const customerMessage = "I received the wrong item. What should I do?";
-    
-    const promptComponents: PromptComponents = {
-        role: "You are a customer service representative for an e-commerce company.",
-        context: `Our company policy:
-    - Wrong items can be returned for a full refund or exchange
-    - We provide prepaid return labels for wrong items
-    - Exchanges are processed within 2-3 business days of receiving the return`,
-        instructions: [
-            "Apologize for the mistake",
-            "Confirm the return/exchange process",
-            "Offer to send a prepaid return label",
-            "Explain the timeline for refund or exchange",
-            "Ask if they prefer refund or exchange"
-        ],
-        constraints: [
-            "Do not charge the customer for return shipping",
-            "Do not promise specific delivery dates for exchanges",
-            "Always apologize for the inconvenience",
-            "Keep responses under 150 words"
-        ],
-        examples: [
-            {
-                input: "I got the wrong size",
-                output: "I sincerely apologize for the mix-up. I'll send you a prepaid return label right away. Once we receive the item, we can process a full refund or send you the correct size - whichever you prefer. The refund typically takes 3-5 business days, or we can ship the correct size within 2-3 business days. Would you like a refund or exchange?"
-            }
-        ],
-        input: customerMessage
-    };
-    
-    const prompt = buildStructuredPrompt(promptComponents);
-    
-    const response = await client.chat.completions.create({
-        model: MODEL,
-        messages: [
-            { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-    });
-
-    const content = response.choices[0].message.content || '';
-    
-    console.log('--- Programmatic Structured Prompt ---');
-    console.log('Customer Message:', customerMessage);
-    console.log('\nAI Response:');
-    console.log(content);
-}
-
-/**
  * Production notes:
  * 
  * 1. Structured prompts improve reliability by making expectations explicit
  * 2. Always include Role, Context, Instructions, and Constraints for production use
  * 3. Examples (few-shot learning) can significantly improve output quality
  * 4. Separate Input clearly to avoid confusion between instructions and data
- * 5. Use programmatic prompt building for maintainability in production
+ * 5. Build prompts with explicit structure for maintainability in production
  * 6. Test different prompt structures to find what works best for your use case
  * 7. Monitor prompt performance and iterate based on real-world results
  * 8. Consider using prompt templates or configuration files for complex systems

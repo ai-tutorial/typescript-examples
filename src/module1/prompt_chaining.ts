@@ -2,7 +2,7 @@
  * Prompt Chaining (Module 1)
  * 
  * Costs & Safety: Multiple calls; keep prompts minimal.
- * Module reference: `Modules/module-1.md` — Section 3.4 Prompt Chaining.
+ * Module reference: [Prompt Chaining: Breaking Complex Tasks](https://aitutorial.dev/context-engineering-prompt-design/advanced-techniques#prompt-chaining-breaking-complex-tasks)
  * Why: Break complex tasks into simple steps; retry and evaluate independently.
  * 
  * Chain steps: classify → extract → (optional) search → respond
@@ -25,7 +25,12 @@ const client: OpenAI = new OpenAI({
 /**
  * Main function that demonstrates the prompt chaining approach
  * 
- * Runs examples showing how to chain multiple LLM calls: classify → extract → respond
+ * This example shows how to chain multiple LLM calls:
+ * 1. Classify the user's intent
+ * 2. Extract relevant information from the message
+ * 3. Generate an appropriate response using the classified intent and extracted information
+ * 
+ * This approach breaks complex tasks into simple steps that can be retried and evaluated independently.
  */
 async function main(): Promise<void> {
     console.log('=== Prompt Chaining Example ===\n');

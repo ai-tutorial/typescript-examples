@@ -2,7 +2,7 @@
  * Advanced Self-Consistency: Multiple Reasoning Paths with Majority Voting
  * 
  * Costs & Safety: Real API calls; generates multiple responses. Requires API key(s).
- * Module reference: `Modules/module-1.md` — Section on Self-Consistency.
+ * Module reference: [Self-Consistency: Voting for Reliability](https://aitutorial.dev/context-engineering-prompt-design/advanced-techniques#self-consistency-voting-for-reliability)
  * Why: Improves accuracy by generating multiple chain-of-thought reasoning paths and taking
  *      a majority vote. Reduces the impact of individual reasoning errors.
  */
@@ -24,10 +24,10 @@ const client = new OpenAI({
 /**
  * Main function that demonstrates advanced self-consistency technique
  * 
- * Self-Consistency improves accuracy by:
- * 1. Generating multiple chain-of-thought reasoning paths for the same problem
- * 2. Extracting the final answer from each path
- * 3. Taking a majority vote to determine the final answer
+ * This example shows how to improve accuracy using self-consistency:
+ * 1. Generate multiple chain-of-thought reasoning paths for the same problem
+ * 2. Extract the final answer from each path
+ * 3. Take a majority vote to determine the final answer
  * 
  * This technique is particularly effective for problems where reasoning matters,
  * as it reduces the impact of individual reasoning errors.

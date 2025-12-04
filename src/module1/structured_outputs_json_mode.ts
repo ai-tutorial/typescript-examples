@@ -2,7 +2,7 @@
  * Structured Outputs with JSON Schema - Approach 2: Structured Outputs (JSON Mode)
  * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: `Modules/module-1.md` — Section 8.1 Structured Outputs with JSON Schemas.
+ * Module reference: [Example 2: Structured Outputs (JSON Mode)](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#example-2-structured-outputs-json-mode)
  * Why: Uses OpenAI's structured outputs feature (response_format: json_object) combined with
  *      schema validation. This is more reliable than just including the schema in the prompt.
  */

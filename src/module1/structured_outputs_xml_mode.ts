@@ -2,7 +2,7 @@
  * Structured Outputs with XML Schema - Approach 2: Structured Outputs (XML Mode)
  * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: `Modules/module-1.md` — Section 8.1 Structured Outputs with XML Schemas.
+ * Module reference: [Example 2: Structured Outputs (XML Mode)](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#example-2-structured-outputs-xml-mode)
  * Why: Uses prompt instructions to request XML output combined with XML parsing and validation.
  *      Note that OpenAI's API doesn't have a native XML response format like json_object.
  */

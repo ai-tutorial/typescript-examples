@@ -2,7 +2,7 @@
  * Structured Outputs with JSON Schema - Approach 1: Schema in Prompt
  * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: `Modules/module-1.md` — Section 8.1 Structured Outputs with JSON Schemas.
+ * Module reference: [Example 1: Schema in Prompt](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#example-1-schema-in-prompt)
  * Why: Includes the JSON schema in the prompt itself, instructing the model to follow
  *      the schema structure. Simpler than using structured outputs API but less reliable.
  */

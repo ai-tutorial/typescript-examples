@@ -9,7 +9,38 @@ Exceptions:
 - When you need to explicitly narrow or widen the type for clarity
 - When documenting complex types that aren't obvious from the assignment
 
-Every file must have a `main` function as the first function (after imports and setup). The `main` function's documentation comment (JSDoc) must explain the goal and main steps of the example. The function body should demonstrate the approach by running examples. This allows users to understand the approach before diving into implementation details.
+Every file must have a `main` function as the first function (after imports and setup). The `main` function's documentation comment (JSDoc) must follow this structure:
+1. Brief description: "Main function that demonstrates [technique/approach]"
+2. Introduction: "This example shows how to [do something]:" or "This example demonstrates [concept]:"
+3. Numbered steps: List the main steps as a numbered list (1. 2. 3. etc.)
+4. Concluding note: A brief statement about the approach, its benefits, or trade-offs
+
+Example:
+```
+/**
+ * Main function that demonstrates structured outputs with XML mode
+ * 
+ * This example shows how to request XML output using prompt engineering:
+ * 1. Create a prompt with XML structure description and example
+ * 2. Call the API (no native XML format, so we rely on prompt engineering)
+ * 3. Extract XML from the response (may be wrapped in markdown)
+ * 4. Parse and validate the XML structure
+ * 
+ * This approach requires more parsing than JSON but provides structured output.
+ */
+```
+
+The function body should demonstrate the approach by running examples. This allows users to understand the approach before diving into implementation details.
+
+Every file must include in its script-level documentation (the file header comment) the following three required fields:
+1. **Costs & Safety**: Brief note about API costs, safety considerations, and requirements (e.g., "Real API calls; keep inputs small. Requires API key(s).")
+2. **Module reference**: A markdown link to the section in the tutorial that references this example. The link format is: `[Section Name](https://aitutorial.dev/{module-slug}#{anchor-slug})` where:
+   - The module-slug is derived from the MDX filename (lowercase, hyphens instead of underscores/spaces)
+   - The anchor-slug is derived from the section heading where the CodeEditor appears (lowercase, spaces to hyphens, special chars removed)
+   - Example: `[Section 2.1 The Anatomy of a Production Prompt](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#the-anatomy-of-a-production-prompt)`
+3. **Why**: Brief explanation of why this technique/approach is useful
+
+The Module reference link must point to the exact section where the CodeEditor component references this file in the deployed tutorial at https://aitutorial.dev.
 
 ## Mintlyfe Component Limitations
 

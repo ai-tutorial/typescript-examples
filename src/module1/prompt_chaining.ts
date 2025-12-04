@@ -25,31 +25,21 @@ const client: OpenAI = new OpenAI({
 /**
  * Main function that demonstrates the prompt chaining approach
  * 
- * This example shows how to chain multiple LLM calls:
- * 1. Classify the user's intent
- * 2. Extract relevant information from the message
- * 3. Generate an appropriate response using the classified intent and extracted information
+ * This example shows how to chain multiple LLM calls to break complex tasks into simple steps.
  * 
  * This approach breaks complex tasks into simple steps that can be retried and evaluated independently.
  */
 async function main(): Promise<void> {
-    console.log('=== Prompt Chaining Example ===\n');
-    
     const userMessage = "I'm frustrated that my order hasn't arrived yet. It's been 2 weeks!";
-    console.log('User Message:', userMessage);
-    console.log('--- Step 1: Classify Intent ---');
     
+    // Step 1: Classify the user's intent
     const intent = await classifyIntent(userMessage);
-    console.log('Intent:', intent);
     
-    console.log('--- Step 2: Extract Information ---');
+    // Step 2: Extract relevant information from the message
     const extractedInfo = await extractInformation(userMessage, intent);
-    console.log('Extracted Information:', JSON.stringify(extractedInfo, null, 2));
     
-    console.log('--- Step 3: Generate Response ---');
-    const response = await generateResponse(userMessage, intent, extractedInfo);
-    console.log('Response:', response);
-    console.log('');
+    // Step 3: Generate an appropriate response using the classified intent and extracted information
+    await generateResponse(userMessage, intent, extractedInfo);
 }
 
 /**
@@ -62,6 +52,9 @@ async function main(): Promise<void> {
  * - Route to appropriate handlers based on classification
  */
 async function classifyIntent(userMessage: string): Promise<string> {
+    console.log('--- Step 1: Classify Intent ---');
+    console.log('User Message:', userMessage);
+    
     const classificationPrompt = `Classify the following user message into one of these categories:
     - question: User is asking a question
     - request: User is making a request (e.g., "do this", "help me with")
@@ -82,6 +75,7 @@ async function classifyIntent(userMessage: string): Promise<string> {
     });
 
     const category = (response.choices[0].message.content || 'other').trim().toLowerCase();
+    console.log('Intent:', category);
     return category;
 }
 
@@ -95,6 +89,9 @@ async function classifyIntent(userMessage: string): Promise<string> {
  * - Use different extraction strategies for different intents
  */
 async function extractInformation(userMessage: string, intent: string): Promise<Record<string, string>> {
+    console.log('--- Step 2: Extract Information ---');
+    console.log('Intent:', intent);
+    
     const extractionPrompt = `Extract key information from the following user message.
     Intent category: ${intent}
 
@@ -121,14 +118,17 @@ async function extractInformation(userMessage: string, intent: string): Promise<
     const content = response.choices[0].message.content || '{}';
     try {
         const extracted = JSON.parse(content) as Record<string, string>;
+        console.log('Extracted Information:', JSON.stringify(extracted, null, 2));
         return extracted;
     } catch (error) {
         console.error('Error parsing extraction result:', error);
-        return {
+        const fallback = {
             mainTopic: 'unknown',
             urgency: 'medium',
             keyDetails: userMessage,
         };
+        console.log('Extracted Information:', JSON.stringify(fallback, null, 2));
+        return fallback;
     }
 }
 
@@ -146,6 +146,8 @@ async function generateResponse(
     intent: string,
     extractedInfo: Record<string, string>
 ): Promise<string> {
+    console.log('--- Step 3: Generate Response ---');
+    
     const responsePrompt = `You are a helpful assistant. Generate an appropriate response based on the following information:
 
     Intent: ${intent}
@@ -171,7 +173,9 @@ async function generateResponse(
         temperature: 0.7,
     });
 
-    return response.choices[0].message.content || 'I apologize, but I was unable to generate a response.';
+    const result = response.choices[0].message.content || 'I apologize, but I was unable to generate a response.';
+    console.log('Response:', result);
+    return result;
 }
 
 

@@ -43,26 +43,13 @@ const EXAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
 /**
  * Main function that demonstrates structured outputs with XML schema in prompt
  * 
- * This example shows how to include the XML schema directly in the prompt:
- * 1. Load an XML schema for reference
- * 2. Create a prompt that includes the schema and example
- * 3. Call the API
- * 4. Extract XML from response, parse and validate
+ * This example shows how to include the XML schema directly in the prompt.
  * 
  * This approach is simpler but less reliable than programmatic validation.
  */
-async function main(): Promise<void> {
+async function extractContractInfo(client: OpenAI, contractText: string): Promise<void> {
     const CONTRACT_XML_SCHEMA = await XMLUtils.loadXmlSchema('contract-schema.xml');
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const contractText = `
-    This Services Agreement is effective January 15, 2025.
-    Provider delivers monthly support; Client pays $5,000 net 30.
-    Liability limited to last 3 months fees.
-    `;
-
+    
     const prompt = `Extract contract information from the following text. Return a valid XML document matching this structure:
 
     ${EXAMPLE_XML}
@@ -89,6 +76,24 @@ async function main(): Promise<void> {
     console.log('Parsed contract:', JSON.stringify(validated, null, 2));
     console.log('\nRaw XML response:');
     console.log(xmlContent);
+}
+
+async function main(): Promise<void> {
+    const client = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const contractText = `
+    This Services Agreement is effective January 15, 2025.
+    Provider delivers monthly support; Client pays $5,000 net 30.
+    Liability limited to last 3 months fees.
+    `;
+
+    // Step 1: Load an XML schema for reference
+    // Step 2: Create a prompt that includes the schema and example
+    // Step 3: Call the API
+    // Step 4: Extract XML from response, parse and validate
+    await extractContractInfo(client, contractText);
 }
 
 await main();

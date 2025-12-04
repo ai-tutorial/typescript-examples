@@ -24,21 +24,19 @@ const client = new OpenAI({
 /**
  * Main function that demonstrates structured prompt engineering
  * 
- * This example shows how to build production-ready prompts with explicit components:
- * 1. Define the Role: Who the AI is acting as
- * 2. Provide Context: Background information needed
- * 3. Specify Instructions: Clear step-by-step guidance
- * 4. Set Constraints: Boundaries and limitations
- * 5. Include Examples: Few-shot learning examples (optional)
- * 6. Separate Input: The actual user input to process
+ * This example shows how to build production-ready prompts with explicit components.
  * 
  * This structured approach reduces hallucinations and parsing errors while improving reliability.
  */
 async function main(): Promise<void> {
-    console.log('=== Structured Prompt Anatomy Demo ===\n');
-    
     const customerMessage = "Hi my order arrived late by 6 days. Can I get a refund?";
 
+    // Step 1: Define the Role: Who the AI is acting as
+    // Step 2: Provide Context: Background information needed
+    // Step 3: Specify Instructions: Clear step-by-step guidance
+    // Step 4: Set Constraints: Boundaries and limitations
+    // Step 5: Include Examples: Few-shot learning examples (optional)
+    // Step 6: Separate Input: The actual user input to process
     const prompt = `Role: You are a customer service representative for an e-commerce company.
 
     Context: 

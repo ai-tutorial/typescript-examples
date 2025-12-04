@@ -43,24 +43,11 @@ const EXAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
 /**
  * Main function that demonstrates structured outputs with XML mode
  * 
- * This example shows how to request XML output using prompt engineering:
- * 1. Create a prompt with XML structure description and example
- * 2. Call the API (no native XML format, so we rely on prompt engineering)
- * 3. Extract XML from the response (may be wrapped in markdown)
- * 4. Parse and validate the XML structure
+ * This example shows how to request XML output using prompt engineering.
  * 
  * This approach requires more parsing than JSON but provides structured output.
  */
-async function main(): Promise<void> {
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const contractText = `
-    This Services Agreement is effective January 15, 2025.
-    Provider delivers monthly support; Client pays $5,000 net 30.
-    Liability limited to last 3 months fees.`;
-
+async function extractContractInfo(client: OpenAI, contractText: string): Promise<void> {
     const prompt = `Extract contract information from the following text.
     Return a valid XML document with the following structure:
     - parties: contains party elements with party names
@@ -92,6 +79,23 @@ async function main(): Promise<void> {
     console.log('Parsed contract:', JSON.stringify(result, null, 2));
     console.log('\nRaw XML response:');
     console.log(xmlContent);
+}
+
+async function main(): Promise<void> {
+    const client = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const contractText = `
+    This Services Agreement is effective January 15, 2025.
+    Provider delivers monthly support; Client pays $5,000 net 30.
+    Liability limited to last 3 months fees.`;
+
+    // Step 1: Create a prompt with XML structure description and example
+    // Step 2: Call the API (no native XML format, so we rely on prompt engineering)
+    // Step 3: Extract XML from the response (may be wrapped in markdown)
+    // Step 4: Parse and validate the XML structure
+    await extractContractInfo(client, contractText);
 }
 
 await main();

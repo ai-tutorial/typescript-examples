@@ -21,10 +21,7 @@ const client = new OpenAI({
 /**
  * Main function that demonstrates a basic OpenAI API call
  * 
- * This example shows the simplest way to interact with OpenAI's API:
- * 1. Create a client with your API key
- * 2. Send a message using chat.completions.create
- * 3. Extract and display the response
+ * This example shows the simplest way to interact with OpenAI's API.
  * 
  * This is the foundation for all other LLM interactions.
  */
@@ -39,7 +36,7 @@ async function main(): Promise<void> {
         ],
     });
 
-    console.log(response.choices[0].message.content);
+    console.log('Response:', response.choices[0].message.content);
 }
 
 await main();

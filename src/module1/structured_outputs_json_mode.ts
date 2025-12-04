@@ -32,11 +32,7 @@ type Contract = {
 /**
  * Main function that demonstrates structured outputs with JSON mode
  * 
- * This example shows how to use OpenAI's structured outputs feature:
- * 1. Load a JSON schema for validation
- * 2. Create a prompt describing the desired structure
- * 3. Call the API with response_format: json_object
- * 4. Parse and validate the response against the schema
+ * This example shows how to use OpenAI's structured outputs feature with JSON mode and schema validation.
  * 
  * This approach is more reliable than including the schema in the prompt alone.
  */

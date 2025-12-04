@@ -32,25 +32,13 @@ type Contract = {
 /**
  * Main function that demonstrates structured outputs with schema in prompt
  * 
- * This example shows how to include the JSON schema directly in the prompt:
- * 1. Load a JSON schema for reference
- * 2. Create a prompt that includes the schema
- * 3. Call the API with response_format: json_object
- * 4. Parse and validate the response against the schema
+ * This example shows how to include the JSON schema directly in the prompt.
  * 
  * This approach is simpler but less reliable than using structured outputs API alone.
  */
-async function main(): Promise<void> {
+async function extractContractInfo(client: OpenAI, contractText: string): Promise<Contract> {
     const CONTRACT_SCHEMA = await JSONUtils.loadJsonSchema('contract-schema.json');
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const contractText = `
-    This Services Agreement is effective January 15, 2025.
-    Provider delivers monthly support; Client pays $5,000 net 30.
-    Liability limited to last 3 months fees.`;
-
+    
     const prompt = `Extract contract information from the following text. Return a JSON object matching this schema:
     ${JSON.stringify(CONTRACT_SCHEMA, null, 2)}
 
@@ -71,6 +59,25 @@ async function main(): Promise<void> {
 
     console.log('--- Schema validation: OK ---');
     console.log(JSON.stringify(validated, null, 2));
+    
+    return validated;
+}
+
+async function main(): Promise<void> {
+    const client = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const contractText = `
+    This Services Agreement is effective January 15, 2025.
+    Provider delivers monthly support; Client pays $5,000 net 30.
+    Liability limited to last 3 months fees.`;
+
+    // Step 1: Load a JSON schema for reference
+    // Step 2: Create a prompt that includes the schema
+    // Step 3: Call the API with response_format: json_object
+    // Step 4: Parse and validate the response against the schema
+    await extractContractInfo(client, contractText);
 }
 
 await main();

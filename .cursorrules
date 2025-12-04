@@ -1,6 +1,25 @@
+## Context and Purpose
+
+These examples are referenced in the tutorial at https://aitutorial.dev. The primary purpose of these examples is to help users learn key LLM principles and techniques. When creating or modifying examples, prioritize:
+
+- **Clean and simple code**: Focus on clarity and readability over complex optimizations
+- **Learning-first approach**: Code should demonstrate concepts clearly, even if it means being more explicit than production code
+- **Educational value**: Each example should teach a specific technique or principle
+- **Minimal complexity**: Avoid unnecessary abstractions or advanced patterns that might distract from the core learning objective
+- **Executable scripts**: Each example should be a single, self-contained script that can be executed directly
+- **Useful console output**: Console output should be relevant and useful for the learning process, showing intermediate steps, results, and key insights
+
+The goal is to make LLM concepts accessible and understandable, not to showcase production-ready enterprise patterns.
+
+## Code Style Rules
+
+### Function Return Types
 Functions must declare return types.
 
-Local variables should not have explicit type annotations. TypeScript's type inference should be used instead. For example:
+### Local Variable Type Annotations
+Local variables should not have explicit type annotations. TypeScript's type inference should be used instead.
+
+Examples:
 - ✅ `const result = await fetchData();` (type inferred)
 - ❌ `const result: string = await fetchData();` (explicit type not needed)
 
@@ -9,42 +28,56 @@ Exceptions:
 - When you need to explicitly narrow or widen the type for clarity
 - When documenting complex types that aren't obvious from the assignment
 
-Every file must have a `main` function as the first function (after imports and setup). The `main` function's documentation comment (JSDoc) must follow this structure:
+## File Structure Requirements
+
+### Main Function
+Every file must have a `main` function as the first function (after imports and setup). This is mandatory - the `main` function must appear before any other function definitions in the file.
+
+**Main function documentation (JSDoc) must follow this structure:**
 1. Brief description: "Main function that demonstrates [technique/approach]"
 2. Introduction: "This example shows how to [do something]:" or "This example demonstrates [concept]:"
-3. Numbered steps: List the main steps as a numbered list (1. 2. 3. etc.)
-4. Concluding note: A brief statement about the approach, its benefits, or trade-offs
+3. Concluding note: A brief statement about the approach, its benefits, or trade-offs
 
 Example:
 ```
 /**
  * Main function that demonstrates structured outputs with XML mode
  * 
- * This example shows how to request XML output using prompt engineering:
- * 1. Create a prompt with XML structure description and example
- * 2. Call the API (no native XML format, so we rely on prompt engineering)
- * 3. Extract XML from the response (may be wrapped in markdown)
- * 4. Parse and validate the XML structure
+ * This example shows how to request XML output using prompt engineering.
  * 
  * This approach requires more parsing than JSON but provides structured output.
  */
 ```
 
-The function body should demonstrate the approach by running examples. This allows users to understand the approach before diving into implementation details.
+**Main function body:**
+- Should demonstrate the approach by running examples
+- Use comments to document the steps being performed (number the steps as needed: Step 1, Step 2, etc.)
+- The number of steps should reflect what's needed to clearly demonstrate the approach - there's no requirement for a specific number of steps
+- This allows users to understand the approach before diving into implementation details
+- If `main` only calls a single function, inline that function's code directly into `main` and remove the separate function definition
 
+### Logging Rules
+
+**When `main` calls other functions:**
+- Input and output logs (`console.log`) should be placed inside the called functions, not in `main`
+- Remove all `console.log` statements from `main` that are related to function invocations
+- In `main`, use only comments to document the steps being performed
+- Example in `main`: `// Step 1: Classify the user's intent` followed by the function call
+- Example in called function: `console.log('Input:', input); ... console.log('Output:', output);`
+
+**When `main` does not call other functions:**
+- If `main` directly makes API calls (no function calls), `console.log` statements are acceptable in `main` to show the results
+
+### File-Level Documentation
 Every file must include in its script-level documentation (the file header comment) the following three required fields:
+
 1. **Costs & Safety**: Brief note about API costs, safety considerations, and requirements (e.g., "Real API calls; keep inputs small. Requires API key(s).")
-2. **Module reference**: A markdown link to the section in the tutorial that references this example. The link format is: `[Section Name](https://aitutorial.dev/{module-slug}#{anchor-slug})` where:
+
+2. **Module reference**: A markdown link to the section in the tutorial that references this example.
+   - Link format: `[Section Name](https://aitutorial.dev/{module-slug}#{anchor-slug})`
    - The module-slug is derived from the MDX filename (lowercase, hyphens instead of underscores/spaces)
    - The anchor-slug is derived from the section heading where the CodeEditor appears (lowercase, spaces to hyphens, special chars removed)
-   - Example: `[Section 2.1 The Anatomy of a Production Prompt](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#the-anatomy-of-a-production-prompt)`
+   - Example: `[The Anatomy of a Production Prompt](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#the-anatomy-of-a-production-prompt)`
+   - The link must point to the exact section where the CodeEditor component references this file in the deployed tutorial at https://aitutorial.dev
+
 3. **Why**: Brief explanation of why this technique/approach is useful
-
-The Module reference link must point to the exact section where the CodeEditor component references this file in the deployed tutorial at https://aitutorial.dev.
-
-## Mintlyfe Component Limitations
-
-Components cannot import other components from external files. This is a limitation of Mintlyfe. The way to decompose components is that they must reside in the same file. Only one export is allowed per file.
-
-
-

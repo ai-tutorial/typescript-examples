@@ -24,10 +24,7 @@ const client = new OpenAI({
 /**
  * Main function that demonstrates self-consistency technique
  * 
- * This example shows how to improve accuracy using self-consistency:
- * 1. Generate multiple chain-of-thought reasoning paths for the same problem
- * 2. Extract the final answer from each path
- * 3. Take a majority vote to determine the final answer
+ * This example shows how to improve accuracy using self-consistency by generating multiple reasoning paths and taking a majority vote.
  * 
  * This technique is particularly effective for problems where reasoning matters,
  * as it reduces the impact of individual reasoning errors.
@@ -36,50 +33,50 @@ async function main(): Promise<void> {
     const problem = `    A store has 15 apples. They sell 3 apples in the morning and 4 apples in the afternoon. 
     Then they receive a delivery of 8 more apples. How many apples do they have at the end of the day?`;
 
-    const result = await selfConsistency(client, problem, 5);
+    // Step 1: Generate multiple chain-of-thought reasoning paths for the same problem
+    const reasoningPaths = await generateReasoningPaths(problem, 5);
 
-    console.log('\n=== Reasoning Paths ===\n');
-    result.reasoningPaths.forEach((path, index) => {
-        console.log(`--- Path ${index + 1} ---`);
-        console.log(path);
-        const extracted = extractAnswer(path);
-        console.log(`Extracted Answer: ${extracted || 'Could not extract'}`);
-        console.log('');
-    });
+    // Step 2: Extract the final answer from each path
+    const answers = extractAnswersFromPaths(reasoningPaths);
 
-    console.log('=== Results ===\n');
-    console.log('All Answers:', result.answers);
-    console.log(`Majority Answer: ${result.majorityAnswer}`);
-    console.log(`Confidence: ${result.confidence.toFixed(1)}%`);
-    console.log(`\nFinal Answer: ${result.majorityAnswer}`);
-
-    const expectedAnswer = '16';
-    const isCorrect = result.majorityAnswer.toLowerCase().trim() === expectedAnswer;
-    console.log(`\nExpected Answer: ${expectedAnswer}`);
-    console.log(`Correct: ${isCorrect ? '✓' : '✗'}`);
+    // Step 3: Take a majority vote to determine the final answer
+    displayResults(reasoningPaths, answers);
 }
 
 /**
- * Generate a single chain-of-thought reasoning path
+ * Step 1: Generate multiple chain-of-thought reasoning paths
  */
-async function generateReasoningPath(
-    client: OpenAI,
-    problem: string,
-    temperature: number
-): Promise<string> {
-    const prompt = `Solve the following problem step by step. Show your reasoning and end with "The answer is: [your answer]".
+async function generateReasoningPaths(problem: string, numPaths: number): Promise<string[]> {
+    console.log(`\nGenerating ${numPaths} reasoning paths...\n`);
+
+    const temperatures = [0.3, 0.5, 0.7, 0.9, 1.0].slice(0, numPaths);
+
+    const reasoningPaths = await Array.from({ length: numPaths }, (_, i) => i)
+        .reduce(async (accPromise, i) => {
+            const acc = await accPromise;
+            const temperature = temperatures[i] || 0.7;
+            console.log(`Path ${i + 1}/${numPaths} (temperature: ${temperature})...`);
+
+            const prompt = `Solve the following problem step by step. Show your reasoning and end with "The answer is: [your answer]".
 
     Problem: ${problem}
 
     Let's think step by step:`;
 
-    const response = await client.chat.completions.create({
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: temperature,
-    });
+            const response = await client.chat.completions.create({
+                model: MODEL,
+                messages: [{ role: 'user', content: prompt }],
+                temperature: temperature,
+            });
 
-    return response.choices[0].message.content || '';
+            const path = response.choices[0].message.content || '';
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            return [...acc, path];
+        }, Promise.resolve([] as string[]));
+
+    return reasoningPaths;
 }
 
 /**
@@ -125,38 +122,18 @@ function majorityVote(answers: string[]): string {
 }
 
 /**
- * Self-Consistency: Generate multiple reasoning paths and take majority vote
+ * Step 2: Extract the final answer from each reasoning path
  */
-async function selfConsistency(
-    client: OpenAI,
-    problem: string,
-    numPaths: number = 5
-): Promise<{
-    reasoningPaths: string[];
-    answers: string[];
-    majorityAnswer: string;
-    confidence: number;
-}> {
-    console.log(`\nGenerating ${numPaths} reasoning paths...\n`);
-
-    const temperatures = [0.3, 0.5, 0.7, 0.9, 1.0].slice(0, numPaths);
-
-    const reasoningPaths = await Array.from({ length: numPaths }, (_, i) => i)
-        .reduce(async (accPromise, i) => {
-            const acc = await accPromise;
-            const temperature = temperatures[i] || 0.7;
-            console.log(`Path ${i + 1}/${numPaths} (temperature: ${temperature})...`);
-
-            const path = await generateReasoningPath(client, problem, temperature);
-
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            return [...acc, path];
-        }, Promise.resolve([] as string[]));
-
+function extractAnswersFromPaths(reasoningPaths: string[]): string[] {
     const answers = reasoningPaths.map(extractAnswer)
         .filter((a): a is string => a !== null);
+    return answers;
+}
 
+/**
+ * Step 3: Take a majority vote and display results
+ */
+function displayResults(reasoningPaths: string[], answers: string[]): void {
     const majorityAnswer = majorityVote(answers);
 
     const majorityCount = answers.filter(
@@ -166,12 +143,25 @@ async function selfConsistency(
         ? (majorityCount / answers.length) * 100
         : 0;
 
-    return {
-        reasoningPaths,
-        answers,
-        majorityAnswer,
-        confidence,
-    };
+    console.log('\n=== Reasoning Paths ===\n');
+    reasoningPaths.forEach((path, index) => {
+        console.log(`--- Path ${index + 1} ---`);
+        console.log(path);
+        const extracted = extractAnswer(path);
+        console.log(`Extracted Answer: ${extracted || 'Could not extract'}`);
+        console.log('');
+    });
+
+    console.log('=== Results ===\n');
+    console.log('All Answers:', answers);
+    console.log(`Majority Answer: ${majorityAnswer}`);
+    console.log(`Confidence: ${confidence.toFixed(1)}%`);
+    console.log(`\nFinal Answer: ${majorityAnswer}`);
+
+    const expectedAnswer = '16';
+    const isCorrect = majorityAnswer.toLowerCase().trim() === expectedAnswer;
+    console.log(`\nExpected Answer: ${expectedAnswer}`);
+    console.log(`Correct: ${isCorrect ? '✓' : '✗'}`);
 }
 
 await main();

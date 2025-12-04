@@ -16,6 +16,9 @@ The goal is to make LLM concepts accessible and understandable, not to showcase 
 ### Function Return Types
 Functions must declare return types.
 
+### Single Return Point
+Functions must have only one return point. Use early returns or conditional logic to structure the function flow, but ensure there is a single exit point at the end of the function.
+
 ### Local Variable Type Annotations
 Local variables should not have explicit type annotations. TypeScript's type inference should be used instead.
 
@@ -27,6 +30,31 @@ Exceptions:
 - When the type cannot be inferred (e.g., empty arrays: `const items: string[] = []`)
 - When you need to explicitly narrow or widen the type for clarity
 - When documenting complex types that aren't obvious from the assignment
+
+### String Literal Formatting
+Use template literals (backticks) for string interpolation, especially in console.log statements and places with extensive expression interpolation.
+
+Examples:
+- ✅ `console.log(`User Input: ${userInput}`);` (template literal with interpolation)
+- ❌ `console.log('User Input:', userInput);` (comma-separated arguments)
+
+When to use template literals:
+- All `console.log` statements that include variables or expressions
+- Any string that contains multiple interpolated expressions
+- Multi-line strings with interpolation
+
+When to use regular strings:
+- Simple string literals without interpolation: `console.log('---');`
+- Static messages without variables
+
+### Console.log Formatting
+Avoid starting `console.log` statements with `\n` when possible. Instead, use separate `console.log('')` statements for blank lines to improve readability and maintainability.
+
+Examples:
+- ✅ `console.log(''); console.log('=== Example ===');` (separate blank line)
+- ❌ `console.log('\n=== Example ===');` (leading newline in string)
+
+This makes the code more readable and allows for easier modification of spacing between log statements.
 
 ## File Structure Requirements
 

@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { XMLParser } from 'fast-xml-parser';
+import xmlEscape from 'xml-escape';
 
 /**
  * Contract type definition
@@ -140,6 +141,15 @@ export class XMLUtils {
             throw new Error('summary must be a non-empty string');
         }
         return data;
+    }
+
+    /**
+     * Escape XML special characters to prevent injection
+     * @param input - User input string
+     * @returns Escaped string safe for XML
+     */
+    static escapeXml(input: string): string {
+        return xmlEscape(input);
     }
 }
 

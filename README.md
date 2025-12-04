@@ -56,7 +56,8 @@ typescript-examples/
 │       └── structured_prompt_anatomy.ts                # Prompt engineering fundamentals
 ├── env/
 │   └── .env                            # Your API keys (not in git)
-├── run.ts                              # Interactive runner script
+├── scripts/
+│   └── run.ts                          # Interactive runner script
 ├── package.json
 └── tsconfig.json
 ```
@@ -123,7 +124,7 @@ The project includes an interactive runner script that provides a better develop
 ```bash
 npm start
 # or
-npx tsx run.ts
+npx tsx scripts/run.ts
 ```
 
 The runner will:

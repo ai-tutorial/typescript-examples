@@ -47,7 +47,17 @@ const EXAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
  * 
  * This approach requires more parsing than JSON but provides structured output.
  */
-async function extractContractInfo(client: OpenAI, contractText: string): Promise<void> {
+async function main(): Promise<void> {
+    const client = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const contractText = `
+    This Services Agreement is effective January 15, 2025.
+    Provider delivers monthly support; Client pays $5,000 net 30.
+    Liability limited to last 3 months fees.`;
+
+    // Step 1: Create a prompt with XML structure description and example
     const prompt = `Extract contract information from the following text.
     Return a valid XML document with the following structure:
     - parties: contains party elements with party names
@@ -64,14 +74,18 @@ async function extractContractInfo(client: OpenAI, contractText: string): Promis
 
     Return only valid XML. Start with <?xml version="1.0" encoding="UTF-8"?> and wrap everything in a <contract> root element.`;
 
+    // Step 2: Call the API (no native XML format, so we rely on prompt engineering)
     const response = await client.chat.completions.create({
         model: MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
     });
 
+    // Step 3: Extract XML from the response (may be wrapped in markdown)
     const content = response.choices[0].message.content!;
     const xmlContent = XMLUtils.extractXmlFromMarkdown(content);
+    
+    // Step 4: Parse and validate the XML structure
     const parsed = XMLUtils.parseContractXml(xmlContent);
     const result = XMLUtils.validateContract(parsed);
 
@@ -79,23 +93,6 @@ async function extractContractInfo(client: OpenAI, contractText: string): Promis
     console.log('Parsed contract:', JSON.stringify(result, null, 2));
     console.log('\nRaw XML response:');
     console.log(xmlContent);
-}
-
-async function main(): Promise<void> {
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const contractText = `
-    This Services Agreement is effective January 15, 2025.
-    Provider delivers monthly support; Client pays $5,000 net 30.
-    Liability limited to last 3 months fees.`;
-
-    // Step 1: Create a prompt with XML structure description and example
-    // Step 2: Call the API (no native XML format, so we rely on prompt engineering)
-    // Step 3: Extract XML from the response (may be wrapped in markdown)
-    // Step 4: Parse and validate the XML structure
-    await extractContractInfo(client, contractText);
 }
 
 await main();

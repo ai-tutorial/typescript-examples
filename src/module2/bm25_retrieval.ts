@@ -1,4 +1,3 @@
-```typescript
 import OpenAI from "openai";
 import { config } from 'dotenv';
 import { join } from 'path';
@@ -9,12 +8,6 @@ config({ path: join(process.cwd(), 'env', '.env') });
 
 const openai = new OpenAI();
 const essay = readFileSync(join(__dirname, 'data', 'paul_graham_essay.txt'), 'utf-8');
-
-/**
- * Costs & Safety: Local computation only, no API calls.
- * Module reference: [Search Strategy Selection](https://aitutorial.dev/rag/search-strategy-selection#full-text-search-bm25)
- * Why: Demonstrates BM25 (Best Matching 25), a probabilistic information retrieval model that ranks documents based on the query terms appearing in each document.
- */
 
 /**
  * Main function that demonstrates BM25 Retrieval + LLM Generation (RAG)
@@ -31,24 +24,24 @@ async function main() {
         .split('\n\n')
         .map(chunk => chunk.trim())
         .filter(chunk => chunk.length > 0);
-        
-    console.log(`Loaded ${ documents.length } chunks from essay.`);
+
+    console.log(`Loaded ${documents.length} chunks from essay.`);
 
     // Step 2: Initialize Retriever
     const retriever = new BM25Retriever(documents);
-    
+
     // Step 3: Define Query
     const query = "Why did he switch from philosophy to AI?";
     console.log(`\nQuery: "${query}"`);
-    
+
     // Step 4: Retrieve Context
     const topK = 3;
     const results = retriever.search(query, topK);
-    
+
     console.log("\nTop Retrieved Chunks:");
     results.forEach(r => {
-        console.log(`[Rank ${ r.rank }]Score: ${ r.score.toFixed(4) } `);
-        console.log(`Text: ${ r.document.substring(0, 100) }...`); // snippet
+        console.log(`[Rank ${r.rank}]Score: ${r.score.toFixed(4)} `);
+        console.log(`Text: ${r.document.substring(0, 100)}...`); // snippet
     });
 
     const context = results.map(r => r.document).join("\n\n");
@@ -64,7 +57,7 @@ async function main() {
             },
             {
                 role: "user",
-                content: `Context: \n${ context } \n\nQuestion: ${ query } `
+                content: `Context: \n${context} \n\nQuestion: ${query} `
             }
         ],
         temperature: 0
@@ -84,7 +77,7 @@ class BM25Retriever {
     private docLengths: number[];
     private avgdl: number;
     private idf: Map<string, number>;
-    
+
     // Standard BM25 hyperparameters
     private k1: number = 1.5;
     private b: number = 0.75;
@@ -94,7 +87,7 @@ class BM25Retriever {
         this.tokenizedCorpus = documents.map(doc => this.tokenize(doc));
         this.docLengths = this.tokenizedCorpus.map(doc => doc.length);
         this.avgdl = this.docLengths.reduce((a, b) => a + b, 0) / documents.length;
-        
+
         this.idf = this.calculateIDF();
     }
 
@@ -132,7 +125,7 @@ class BM25Retriever {
         for (let i = 0; i < this.corpus.length; i++) {
             const docTokens = this.tokenizedCorpus[i];
             const docLen = this.docLengths[i];
-            
+
             for (const token of tokenizedQuery) {
                 if (!this.idf.has(token)) continue;
 
@@ -142,7 +135,7 @@ class BM25Retriever {
                 // BM25 score formula for this term
                 const numerator = idf * tf * (this.k1 + 1);
                 const denominator = tf + this.k1 * (1 - this.b + this.b * (docLen / this.avgdl));
-                
+
                 scores[i] += numerator / denominator;
             }
         }

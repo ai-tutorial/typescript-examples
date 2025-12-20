@@ -56,6 +56,9 @@ Examples:
 
 This makes the code more readable and allows for easier modification of spacing between log statements.
 
+### String Literal Indentation
+Multi-line string literals (template literals) must be indented to align with the surrounding code indentation level. Ensure that the functionality preserves the indentation if meaningful, or that it is visually consistent if the exact whitespace is not critical for the example.
+
 ## File Structure Requirements
 
 ### Main Function

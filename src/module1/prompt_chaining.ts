@@ -16,7 +16,7 @@ import { join } from 'path';
 config({ path: join(process.cwd(), 'env', '.env') });
 
 // Setup
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = process.env.OPENAI_MODEL!;
 
 const client: OpenAI = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,

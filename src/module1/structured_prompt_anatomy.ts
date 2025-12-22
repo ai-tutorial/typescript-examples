@@ -14,8 +14,8 @@ import { join } from 'path';
 // Load environment variables from env/.env
 config({ path: join(process.cwd(), 'env', '.env') });
 
-// Setup
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+// Setup    
+const MODEL = process.env.OPENAI_MODEL!;
 
 const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -78,7 +78,7 @@ async function main(): Promise<void> {
     });
 
     const content = response.choices[0].message.content || '';
-    
+
     console.log('--- Structured Prompt Example ---');
     console.log('Customer Message:', customerMessage);
     console.log('\nAI Response:');

@@ -45,7 +45,10 @@ async function main() {
 }
 
 // Execute main if run directly
-if (require.main === module) {
+import { fileURLToPath } from 'url';
+
+// Execute main if run directly
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
     main().catch(console.error);
 }
 
@@ -110,7 +113,7 @@ export function exampleSemantic() {
         - Enables source citation
     `;
 
-    const semanticChunks = semanticChunking(semanticDoc, 100);
+    const semanticChunks = semanticChunking(semanticDoc, 100, 20);
     for (let i = 0; i < semanticChunks.length; i++) {
         console.log(`Chunk ${i + 1}:\n${semanticChunks[i]}\n`);
     }

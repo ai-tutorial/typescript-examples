@@ -15,7 +15,7 @@ import { join } from 'path';
 config({ path: join(process.cwd(), 'env', '.env') });
 
 // Setup
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = 'gpt-4o-mini';
 
 const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -66,7 +66,6 @@ async function generateReasoningPaths(problem: string, numPaths: number): Promis
             const response = await client.chat.completions.create({
                 model: MODEL,
                 messages: [{ role: 'user', content: prompt }],
-                temperature: temperature,
             });
 
             const path = response.choices[0].message.content || '';

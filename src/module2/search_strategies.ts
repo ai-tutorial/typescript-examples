@@ -42,9 +42,9 @@ async function main() {
     await runHybridExample();
 }
 
-if (require.main === module) {
-    main().catch(console.error);
-}
+import { fileURLToPath } from 'url';
+
+// Main execution moved to end of file
 
 // ==========================================
 // Part 1: Definitions (Classes & Core Functions)
@@ -389,4 +389,8 @@ export async function runHybridExample() {
     fusedResults.slice(0, 3).forEach((r, i) => {
         console.log(`[Rank ${i + 1}] Score: ${r.score.toFixed(4)} - "${r.document.slice(0, 80)}..."`);
     });
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main().catch(console.error);
 }

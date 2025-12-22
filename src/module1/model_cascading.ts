@@ -19,7 +19,7 @@ const client = new OpenAI({
 });
 
 const CHEAP_MODEL = 'gpt-3.5-turbo';
-const EXPENSIVE_MODEL = 'gpt-4-turbo';
+const EXPENSIVE_MODEL = 'gpt-4o';
 
 type ClassificationResult = {
     sentiment: string;
@@ -88,9 +88,9 @@ async function cascadedClassification(
 
     const cheapContent = cheapResponse.choices[0].message.content || '';
     const parsed = parseResponse(cheapContent);
-    
+
     let result: ClassificationResult;
-    
+
     // Step 2: Check confidence
     if (parsed.confidence >= confidenceThreshold) {
         result = {
@@ -124,7 +124,7 @@ async function cascadedClassification(
             cost: 0.01  // Approximate cost per 1K tokens for GPT-4 Turbo
         };
     }
-    
+
     return result;
 }
 
@@ -135,7 +135,7 @@ async function cascadedClassification(
  */
 function parseResponse(response: string): { sentiment: string; confidence: number } {
     const lowerContent = response.toLowerCase();
-    
+
     // Extract sentiment
     let sentiment: string;
     if (lowerContent.includes('positive')) {
@@ -147,7 +147,7 @@ function parseResponse(response: string): { sentiment: string; confidence: numbe
     } else {
         sentiment = 'neutral';  // Default fallback
     }
-    
+
     // Extract confidence (look for pattern like "confidence: 0.85" or "0.85")
     const confidenceMatch = response.match(/confidence:\s*([0-9.]+)|([0-9]\.[0-9]+)/i);
     let confidence: number;
@@ -159,7 +159,7 @@ function parseResponse(response: string): { sentiment: string; confidence: numbe
         // If no confidence found, estimate based on response clarity
         confidence = 0.7;  // Default moderate confidence
     }
-    
+
     return { sentiment, confidence };
 }
 
@@ -170,7 +170,7 @@ function parseResponse(response: string): { sentiment: string; confidence: numbe
  */
 function extractSentiment(response: string): string {
     const lowerContent = response.toLowerCase();
-    
+
     let result: string;
     if (lowerContent.includes('positive')) {
         result = 'positive';
@@ -181,7 +181,7 @@ function extractSentiment(response: string): string {
     } else {
         result = 'neutral';  // Default fallback
     }
-    
+
     return result;
 }
 

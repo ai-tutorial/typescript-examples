@@ -18,7 +18,7 @@ const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4-turbo';
+const MODEL = process.env.OPENAI_MODEL!;
 
 /**
  * Main function that demonstrates prompt caching with OpenAI
@@ -112,7 +112,6 @@ async function queryWithCaching(query: string, knowledgeBase: string): Promise<s
                 content: query  // This changes with each request
             }
         ],
-        temperature: 0.7,
     });
 
     const content = response.choices[0].message.content || '';

@@ -1,0 +1,26 @@
+[
+  {
+    "query": "How do I reset my password?",
+    "ground_truth_nodes": [
+      "Relevant document text 1 for How do I reset my password?",
+      "Relevant document text 2"
+    ],
+    "expected_answer": "This is the expected answer for How do I reset my password?"
+  },
+  {
+    "query": "What's the return policy?",
+    "ground_truth_nodes": [
+      "Relevant document text 1 for What's the return policy?",
+      "Relevant document text 2"
+    ],
+    "expected_answer": "This is the expected answer for What's the return policy?"
+  },
+  {
+    "query": "Do you ship internationally?",
+    "ground_truth_nodes": [
+      "Relevant document text 1 for Do you ship internationally?",
+      "Relevant document text 2"
+    ],
+    "expected_answer": "This is the expected answer for Do you ship internationally?"
+  }
+]

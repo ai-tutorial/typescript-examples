@@ -18,7 +18,7 @@ const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const MODEL = process.env.OPENAI_MODEL!;
 
 type EvaluationItem = {
     message: string;
@@ -103,16 +103,16 @@ async function main(): Promise<void> {
  */
 async function testPrompt(promptTemplate: string, evalData: EvaluationItem[]): Promise<number> {
     let correct = 0;
-    
+
     for (const item of evalData) {
         const prompt = promptTemplate.replace("{message}", item.message);
         const prediction = await generatePrediction(prompt);
-        
+
         if (prediction.toLowerCase().trim() === item.label.toLowerCase()) {
             correct++;
         }
     }
-    
+
     const accuracy = correct / evalData.length;
     return accuracy;
 }
@@ -125,11 +125,11 @@ async function testPrompt(promptTemplate: string, evalData: EvaluationItem[]): P
  */
 async function analyzeFailures(promptTemplate: string, evalData: EvaluationItem[]): Promise<Failure[]> {
     const failures: Failure[] = [];
-    
+
     for (const item of evalData) {
         const prompt = promptTemplate.replace("{message}", item.message);
         const prediction = await generatePrediction(prompt);
-        
+
         if (prediction.toLowerCase().trim() !== item.label.toLowerCase()) {
             failures.push({
                 input: item.message,
@@ -138,7 +138,7 @@ async function analyzeFailures(promptTemplate: string, evalData: EvaluationItem[
             });
         }
     }
-    
+
     return failures;
 }
 
@@ -148,17 +148,17 @@ async function analyzeFailures(promptTemplate: string, evalData: EvaluationItem[
  * @returns Predicted label
  */
 async function generatePrediction(prompt: string): Promise<string> {
+    console.log(`[API Call] Sending prompt: "${prompt.replace(/\n/g, ' ').substring(0, 50)}..."`);
     const response = await client.chat.completions.create({
         model: MODEL,
         messages: [
             { role: 'user', content: prompt }
         ],
-        temperature: 0.3,
     });
 
     const content = response.choices[0].message.content || '';
     const lowerContent = content.toLowerCase();
-    
+
     let result: string;
     if (lowerContent.includes('positive')) {
         result = 'positive';
@@ -169,7 +169,7 @@ async function generatePrediction(prompt: string): Promise<string> {
     } else {
         result = content.trim();
     }
-    
+
     return result;
 }
 

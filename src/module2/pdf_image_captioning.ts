@@ -19,7 +19,7 @@ async function main() {
 
     // Example image path
     // Users should place a file here or we warn.
-    const imagePath = join(process.cwd(), 'src', 'module2', 'data', 'sample_chart.png');
+    const imagePath = join(process.cwd(), 'src', 'module2', 'data', 'monthly_revenue_chart.png');
 
     if (!existsSync(imagePath)) {
         console.error(`\n[Warn] Image not found at: ${imagePath}`);

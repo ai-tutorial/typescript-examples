@@ -98,7 +98,7 @@ class UnstructuredDataPipeline {
         };
     }
 
-    async processDocx(filePath: string): Promise<any> {
+    async processDocx(_filePath: string): Promise<any> {
         // Placeholder for DOCX using 'mammoth' or similar
         return { text: "[DOCX Content Placeholder]", method: "docx", confidence: 0.8 };
     }

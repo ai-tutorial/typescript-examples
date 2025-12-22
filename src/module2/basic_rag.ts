@@ -7,7 +7,9 @@
 import OpenAI from "openai";
 import { ChromaClient } from "chromadb";
 import { config } from 'dotenv';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 
 // Load environment variables
 config({ path: join(process.cwd(), 'env', '.env') });
@@ -15,7 +17,9 @@ config({ path: join(process.cwd(), 'env', '.env') });
 const openai = new OpenAI();
 const chroma = new ChromaClient();
 
-import { readFileSync } from 'fs';
+// ESM-compatible file path resolution
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const essay = readFileSync(join(__dirname, 'data', 'paul_graham_essay.txt'), 'utf-8');
 
 /**

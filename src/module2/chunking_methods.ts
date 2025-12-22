@@ -67,9 +67,14 @@ export function semanticChunking(
             chunks.push(chunk);
         }
 
-        // Move forward with overlap
-        currentPos = bestSplit - chunkOverlap;
-        if (currentPos < 0) currentPos = 0;
+        // Move forward with overlap, but ensure we always advance
+        const nextPos = bestSplit - chunkOverlap;
+        if (nextPos <= currentPos) {
+            // If overlap would cause us to stay in place or go backwards, just move forward by 1
+            currentPos = bestSplit;
+        } else {
+            currentPos = nextPos;
+        }
     }
 
     return chunks;

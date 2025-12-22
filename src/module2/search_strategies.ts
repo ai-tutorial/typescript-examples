@@ -2,14 +2,16 @@
  * Costs & Safety: Uses OpenAI API for answer generation (Costs apply). Requires OPENAI_API_KEY. Keep input text small to minimize costs.
  * Module reference: [Search Strategy Selection](https://aitutorial.dev/rag/search-strategy-selection#bm25-retrieval)
  * Why: Compares BM25 (keyword), Semantic (vector), and Hybrid (RRF) retrieval methods to demonstrate trade-offs in accuracy and cost.
+ * 
+ * Setup: Semantic/Hybrid search require ChromaDB. Start with: docker run -d -p 8000:8000 chromadb/chroma
  */
 
 import OpenAI from "openai";
 import { config } from 'dotenv';
-import { pipeline } from "@xenova/transformers";
 import { ChromaClient } from "chromadb";
-import { join } from 'path';
+import { join, dirname } from 'path';
 import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 
 // Load environment variables if .env exists
 try {
@@ -42,9 +44,9 @@ async function main() {
     await runHybridExample();
 }
 
-import { fileURLToPath } from 'url';
 
 // Main execution moved to end of file
+
 
 // ==========================================
 // Part 1: Definitions (Classes & Core Functions)
@@ -153,8 +155,8 @@ export class SemanticRetriever {
         this.collectionName = collectionName;
     }
 
-    async init(modelName = "Xenova/all-MiniLM-L6-v2") {
-        this.model = await pipeline("feature-extraction", modelName);
+    async init() {
+        const openai = new OpenAI();
 
         try {
             await this.client.deleteCollection({ name: this.collectionName });
@@ -168,22 +170,35 @@ export class SemanticRetriever {
             embeddingFunction: undefined
         });
 
-        console.log("Embedding documents...");
-        const embeddings = await this.model(this.documents, { pooling: "mean", normalize: true });
+        console.log("Embedding documents with OpenAI...");
+        // Get embeddings from OpenAI
+        const embeddingResponse = await openai.embeddings.create({
+            model: "text-embedding-3-small",
+            input: this.documents,
+        });
+
+        const embeddings = embeddingResponse.data.map(item => item.embedding);
 
         await this.collection.add({
             documents: this.documents,
-            embeddings: embeddings.tolist(),
-            ids: this.documents.map((_, i) => `doc_${i} `)
+            embeddings: embeddings,
+            ids: this.documents.map((_, i) => `doc_${i}`)
         });
     }
 
     async search(query: string, topK = 3): Promise<Array<{ document: string; score: number; rank: number }>> {
-        if (!this.collection || !this.model) return [];
-        const queryEmbedding = await this.model(query, { pooling: "mean", normalize: true });
+        if (!this.collection) return [];
+
+        const openai = new OpenAI();
+        const queryEmbeddingResponse = await openai.embeddings.create({
+            model: "text-embedding-3-small",
+            input: query,
+        });
+
+        const queryEmbedding = queryEmbeddingResponse.data[0].embedding;
 
         const results = await this.collection.query({
-            queryEmbeddings: [queryEmbedding.tolist()],
+            queryEmbeddings: [queryEmbedding],
             nResults: topK
         });
 
@@ -231,12 +246,11 @@ export function rrfFuse(
 export async function runBM25Example() {
     console.log("--- BM25 Example ---");
     const openai = new OpenAI();
-    let essay = "";
-    try {
-        essay = readFileSync(join(__dirname, 'data', 'paul_graham_essay.txt'), 'utf-8');
-    } catch {
-        essay = "Sample text for fallback if file missing.\n\nAnother paragraph.";
-    }
+
+    // Use import.meta.url for ESM
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const essay = readFileSync(join(__dirname, 'data', 'paul_graham_essay.txt'), 'utf-8');
 
     // Step 1: Prepare Data
     // Simple paragraph-based chunking

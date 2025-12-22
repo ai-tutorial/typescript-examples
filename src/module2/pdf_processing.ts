@@ -11,40 +11,6 @@ import { createWorker } from "tesseract.js";
 import * as winston from "winston";
 import * as path from "path";
 
-// ==========================================
-// Part 0: Main Execution
-// ==========================================
-
-/**
- * Main function demonstrating the PDF processing pipeline.
- */
-async function main() {
-    const processor = new PDFProcessor();
-
-    // Example 1: Digital PDF (Mock path)
-    console.log("--- Processing Digital PDF ---");
-    // Ensure you have a 'digital_report.pdf' or expect error
-    try {
-        const result1 = await processor.processPdf("digital_report.pdf");
-        console.log("Result:", result1);
-    } catch (e) {
-        console.log("Example file not found, skipping digital execution.");
-    }
-    console.log('');
-
-    // Example 2: Scanned PDF (Mock path)
-    console.log("--- Processing Scanned PDF ---");
-    try {
-        const result2 = await processor.processPdf("scanned_form.pdf");
-        console.log("Result:", result2);
-    } catch (e) {
-        console.log("Example file not found, skipping scanned execution.");
-    }
-}
-
-if (require.main === module) {
-    main().catch(console.error);
-}
 
 // ==========================================
 // Part 1: Helper Functions
@@ -185,4 +151,37 @@ export class PDFProcessor {
 
         return result;
     }
+}
+
+// ==========================================
+// Main Execution
+// ==========================================
+
+import { fileURLToPath } from 'url';
+
+async function main() {
+    const processor = new PDFProcessor();
+
+    // Example 1: Digital PDF (Mock path)
+    console.log("--- Processing Digital PDF ---");
+    try {
+        const result1 = await processor.processPdf("digital_report.pdf");
+        console.log("Result:", result1);
+    } catch (e) {
+        console.log("Example file not found, skipping digital execution.");
+    }
+    console.log('');
+
+    // Example 2: Scanned PDF (Mock path)
+    console.log("--- Processing Scanned PDF ---");
+    try {
+        const result2 = await processor.processPdf("scanned_form.pdf");
+        console.log("Result:", result2);
+    } catch (e) {
+        console.log("Example file not found, skipping scanned execution.");
+    }
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main().catch(console.error);
 }

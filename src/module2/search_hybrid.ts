@@ -9,9 +9,13 @@ import { join } from 'path';
 import { config } from 'dotenv';
 import { LexicalRetriever } from './utils/lexical_retriever';
 import { SemanticRetriever } from './utils/semantic_retriever';
+import OpenAI from 'openai';
 
 // Load environment variables
 config({ path: join(process.cwd(), 'env', '.env') });
+
+const openai = new OpenAI();
+const MODEL = process.env.OPENAI_MODEL || 'gpt-4o';
 
 /**
  * Main function that demonstrates hybrid search strategy
@@ -43,7 +47,7 @@ async function main(): Promise<void> {
     console.log(`Query: "${query}"`);
 
     // Step 4: Run Individual Searches
-    console.log(`Running BM25 (lexical)...`);
+    console.log(`Running Lexical Search (BM25)...`);
     const bm25Results = await lexical.searchRanked(query, 5);
 
     console.log(`Running Semantic Search (vector)...`);
@@ -58,6 +62,29 @@ async function main(): Promise<void> {
     fusedResults.slice(0, 3).forEach((r, i) => {
         console.log(`[Rank ${i + 1}] Score: ${r.score.toFixed(4)} - "${r.document.slice(0, 80)}..."`);
     });
+
+    // Step 6: RAG - Generate Answer using Retrieved Context
+    console.log('');
+    console.log('Generating answer with OpenAI...');
+    const context = fusedResults.slice(0, 3).map(r => r.document).join('\n\n');
+
+    const response = await openai.chat.completions.create({
+        model: MODEL,
+        messages: [
+            {
+                role: 'system',
+                content: 'Answer based only on the provided context. If the context doesn\'t contain the answer, say so.'
+            },
+            {
+                role: 'user',
+                content: `Context:\n${context}\n\nQuestion: ${query}`
+            }
+        ]
+    });
+
+    console.log('');
+    console.log('Answer:');
+    console.log(response.choices[0].message.content);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

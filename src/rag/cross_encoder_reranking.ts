@@ -70,7 +70,7 @@ async function main(): Promise<void> {
  * Load and prepare documents from the assets directory
  */
 function loadDocuments(): string[] {
-    const essayPath = join(__dirname, 'data', 'paul_graham_essay.txt');
+    const essayPath = join(process.cwd(), 'assets', 'paul_graham_essay.txt');
     const essayText = readFileSync(essayPath, 'utf-8');
     const docs = essayText.split('\n\n').filter(p => p.trim().length > 0);
 

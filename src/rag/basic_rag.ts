@@ -21,7 +21,7 @@ const openai = new OpenAI();
 // ESM-compatible file path resolution
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const essay = readFileSync(join(__dirname, 'data', 'paul_graham_essay.txt'), 'utf-8');
+const essay = readFileSync(join(process.cwd(), 'assets', 'paul_graham_essay.txt'), 'utf-8');
 
 /**
  * Main function that demonstrates a simple RAG implementation

@@ -55,7 +55,7 @@ export async function main() {
 
     // --- 1. Data Setup (Retrieval) ---
     // Load data from file using fs for robust referencing, then create Document
-    const filePath = path.join(process.cwd(), "src/module2/paul_graham_essay.txt");
+    const filePath = path.join(process.cwd(), "assets/paul_graham_essay.txt");
     const text = fs.readFileSync(filePath, "utf-8");
     const documents = [new Document({ text: text, id_: "doc_1" })];
 

@@ -27,7 +27,7 @@ async function main(): Promise<void> {
     const openai = new OpenAI();
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-    const essayPath = join(__dirname, 'data', 'paul_graham_essay.txt');
+    const essayPath = join(process.cwd(), 'assets', 'paul_graham_essay.txt');
     const essay = readFileSync(essayPath, 'utf-8');
 
     // Step 1: Prepare Data

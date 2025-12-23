@@ -18,7 +18,10 @@
     "typescript": "~5.9.3"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.0",
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@langchain/core": "^1.1.8",
+    "@langchain/langgraph": "^1.0.7",
+    "@langchain/openai": "^1.2.0",
     "@llamaindex/openai": "^0.4.22",
     "@types/node": "^24.10.1",
     "@types/pdf-parse": "^1.1.5",
@@ -28,6 +31,7 @@
     "dotenv": "^17.2.3",
     "fast-xml-parser": "^4.3.6",
     "jimp": "^1.6.0",
+    "langchain": "^1.2.3",
     "llamaindex": "^0.12.1",
     "node-html-parser": "^7.0.1",
     "okapibm25": "^1.4.1",
@@ -37,6 +41,7 @@
     "pdf-poppler": "^0.2.3",
     "tesseract.js": "^7.0.0",
     "winston": "^3.19.0",
-    "xml-escape": "^1.1.0"
+    "xml-escape": "^1.1.0",
+    "zod": "^4.2.1"
   }
 }

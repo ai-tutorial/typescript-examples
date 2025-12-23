@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
+import { dirname, join } from 'path';
 
 const CONFIG_FILE = 'env/run.conf';
 
@@ -8,6 +9,8 @@ const colors = {
   reset: '\x1b[0m',
   red: '\x1b[31m',
   green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
 };
 
 // Read config file and extract file path
@@ -19,18 +22,18 @@ const readConfigFile = (): string => {
       console.error(colors.red + 'Please reload the page to reinitialize the environment.\n' + colors.reset);
       throw new Error(`Config file not found: ${CONFIG_FILE}`);
     }
-    
+
     const content = readFileSync(CONFIG_FILE, 'utf-8');
-    
+
     if (content.trim().length === 0) {
       console.error(colors.red + `\n✗ Config file is empty: ${CONFIG_FILE}` + colors.reset);
       console.error(colors.red + '\nThe environment initialization appears to be corrupted.' + colors.reset);
       console.error(colors.red + 'Please reload the page to reinitialize the environment.\n' + colors.reset);
       throw new Error(`Config file is empty: ${CONFIG_FILE}`);
     }
-    
+
     const lines = content.split('\n');
-    
+
     for (const line of lines) {
       const trimmed = line.trim();
       if (trimmed.startsWith('file=')) {
@@ -41,7 +44,7 @@ const readConfigFile = (): string => {
         return filePath;
       }
     }
-    
+
     throw new Error(`No file parameter found in config file: ${CONFIG_FILE}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -49,6 +52,28 @@ const readConfigFile = (): string => {
   }
 };
 
+// Install module-specific dependencies if package.json exists
+const installModuleDependencies = (filePath: string): void => {
+  try {
+    // Extract module directory from file path (e.g., src/agents/file.ts -> src/agents)
+    const fileDir = dirname(filePath);
+    const modulePkgPath = join(fileDir, 'package.json');
+
+    if (existsSync(modulePkgPath)) {
+      console.log(colors.blue + `\n📦 Found module-specific package.json in ${fileDir}` + colors.reset);
+      console.log(colors.yellow + '⏳ Installing module dependencies...' + colors.reset);
+
+      // Install dependencies from the module's package.json
+      execSync(`cd ${fileDir} && npm install`, { stdio: 'inherit' });
+
+      console.log(colors.green + '✓ Module dependencies installed\n' + colors.reset);
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(colors.yellow + `\n⚠ Warning: Could not install module dependencies: ${errorMessage}` + colors.reset);
+    console.error(colors.yellow + 'Continuing with root dependencies...\n' + colors.reset);
+  }
+};
 
 // Execute the file
 const executeFile = (filePath: string): void => {
@@ -70,13 +95,16 @@ const main = (): void => {
     if (process.argv.length > 2) {
       filePath = process.argv[2];
     }
-    
+
     // If no argument provided, read from config file
     if (!filePath) {
       filePath = readConfigFile();
     }
-    
-    // Execute the file directly
+
+    // Install module-specific dependencies if available
+    installModuleDependencies(filePath);
+
+    // Execute the file
     executeFile(filePath);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

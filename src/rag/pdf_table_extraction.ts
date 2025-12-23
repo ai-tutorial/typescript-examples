@@ -28,7 +28,7 @@ async function main() {
     console.log("--- Starting Table Extraction ---");
 
     // Point to the real PDF we generated
-    const pdfPath = path.join(process.cwd(), 'src', 'module2', 'data', 'financial_report.pdf');
+    const pdfPath = path.join(process.cwd(), 'assets', 'financial_report.pdf');
 
     if (!fs.existsSync(pdfPath)) {
         console.error(`Error: PDF not found at ${pdfPath}`);

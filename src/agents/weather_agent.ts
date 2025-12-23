@@ -48,8 +48,8 @@ async function runWeatherAgent(userQuery: string): Promise<string> {
 
     // Step 2: Define the weather tool
     const weatherTool = tool(
-        async ({ city }: { city: string }) => {
-            console.log(`  -> Tool called: get_weather(city="${city}")`);
+        async ({ city, units }: { city: string; units?: string }) => {
+            console.log(`  -> Tool called: get_weather(city="${city}", units="${units || 'celsius'}")`);
 
             // In production, call a real weather API
             // For demo, return fake data
@@ -57,16 +57,18 @@ async function runWeatherAgent(userQuery: string): Promise<string> {
                 city: city,
                 temperature: 72,
                 condition: "Sunny",
-                humidity: 45
+                humidity: 45,
+                units: units || 'celsius'
             };
 
             return JSON.stringify(weatherData);
         },
         {
             name: "get_weather",
-            description: "Get current weather for a city. Use this when user asks about weather.",
+            description: "Get current weather conditions for a specific location. Use this when users ask about weather, temperature, or atmospheric conditions.",
             schema: z.object({
-                city: z.string().describe("City name, e.g. 'San Francisco'"),
+                city: z.string().describe("City name or location to get weather for (e.g., 'San Francisco', 'London, UK', 'Tokyo')"),
+                units: z.enum(["celsius", "fahrenheit", "kelvin"]).optional().describe("Temperature units to use. Valid values: 'celsius', 'fahrenheit', 'kelvin'. Defaults to 'celsius'."),
             }),
         }
     );
@@ -83,13 +85,13 @@ async function runWeatherAgent(userQuery: string): Promise<string> {
 
         // Execute the tool
         const toolCall = response.tool_calls[0];
-        const toolResult = await weatherTool.invoke(toolCall.args);
+        const toolResult = await weatherTool.invoke(toolCall);
 
         // Step 6: Send the tool result back to the model
         const finalResponse = await model.invoke([
             { role: "user", content: userQuery },
             { role: "assistant", content: response.content, tool_calls: response.tool_calls },
-            { role: "tool", content: toolResult, tool_call_id: toolCall.id }
+            { role: "tool", content: toolResult.content, tool_call_id: toolCall.id }
         ]);
 
         return finalResponse.content as string;

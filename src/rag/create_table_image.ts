@@ -96,6 +96,6 @@ for (let i = 0; i <= data.length + 2; i++) {
 
 // Save to file
 const buffer = canvas.toBuffer('image/png');
-const outputPath = join(process.cwd(), 'src', 'module2', 'data', 'complex_table.png');
+const outputPath = join(process.cwd(), 'assets', 'complex_table.png');
 writeFileSync(outputPath, buffer);
 console.log(`Table image created at: ${outputPath}`);

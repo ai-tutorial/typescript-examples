@@ -1,0 +1,27 @@
+{
+    "name": "rag-examples",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "RAG (Retrieval-Augmented Generation) examples for AI Tutorial",
+    "dependencies": {
+        "alasql": "^4.15.0",
+        "canvas": "^3.2.0",
+        "dotenv": "^17.2.3",
+        "jimp": "^1.6.0",
+        "llamaindex": "^0.12.1",
+        "node-html-parser": "^7.0.1",
+        "okapibm25": "^1.4.1",
+        "openai": "^6.9.1",
+        "pdf-lib": "^1.17.1",
+        "pdf-parse": "^1.1.1",
+        "pdf-poppler": "^0.2.3",
+        "tesseract.js": "^7.0.0",
+        "winston": "^3.19.0"
+    },
+    "devDependencies": {
+        "@types/node": "^24.10.1",
+        "@types/pdf-parse": "^1.1.5",
+        "tsx": "^4.20.6",
+        "typescript": "~5.9.3"
+    }
+}

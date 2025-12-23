@@ -18,7 +18,7 @@ async function main() {
     console.log("--- Vision Table Extraction ---");
 
     // Example image path (ensure you have this file or use a placeholder)
-    const imagePath = join(process.cwd(), 'src/module2/data', 'complex_table.png');
+    const imagePath = join(process.cwd(), 'assets', 'complex_table.png');
 
     if (!existsSync(imagePath)) {
         console.error(`\n[Error] Example image not found at: ${imagePath}`);

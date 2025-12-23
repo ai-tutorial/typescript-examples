@@ -26,14 +26,10 @@ async function main() {
         return;
     }
 
-    try {
-        console.log(`Processing image: ${imagePath}...`);
-        const markdownTable = await extractTableWithVision(imagePath);
-        console.log("\nExtracted Table (Markdown):");
-        console.log(markdownTable);
-    } catch (error) {
-        console.error("Error processing text:", error);
-    }
+    console.log(`Processing image: ${imagePath}...`);
+    const markdownTable = await extractTableWithVision(imagePath);
+    console.log("\nExtracted Table (Markdown):");
+    console.log(markdownTable);
 }
 
 /**

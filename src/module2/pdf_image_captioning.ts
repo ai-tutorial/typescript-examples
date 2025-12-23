@@ -28,14 +28,10 @@ async function main() {
         return;
     }
 
-    try {
-        console.log(`Generating caption for: ${imagePath}...`);
-        const caption = await generateImageCaption(imagePath);
-        console.log("\nGenerated Caption:");
-        console.log(caption);
-    } catch (error) {
-        console.error("Captioning failed:", error);
-    }
+    console.log(`Generating caption for: ${imagePath}...`);
+    const caption = await generateImageCaption(imagePath);
+    console.log("\nGenerated Caption:");
+    console.log(caption);
 }
 
 /**

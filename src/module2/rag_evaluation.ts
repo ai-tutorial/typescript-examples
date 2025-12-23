@@ -43,10 +43,11 @@ export async function main() {
     console.log("Loaded API Key:", apiKey ? apiKey.substring(0, 10) + "..." : "undefined");
 
     // Setup LLM
+    const model = process.env.OPENAI_MODEL || "gpt-4o";
     Settings.llm = new OpenAI({
-        model: "gpt-4o",
-        temperature: 0,
-        apiKey: apiKey
+        model: model,
+        apiKey: apiKey,
+        temperature: 1
     });
     Settings.embedModel = new OpenAIEmbedding({
         apiKey: apiKey

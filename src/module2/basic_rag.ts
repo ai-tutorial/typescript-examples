@@ -1,21 +1,22 @@
 /**
- * Costs & Safety: Real API calls; keep inputs small. Requires OpenAI API key. Local ChromaDB instance required.
+ * Costs & Safety: Real API calls; keep inputs small. Requires OpenAI API key. 
  * Module reference: [Basic RAG Implementation](https://aitutorial.dev/rag/rag-fundamentals#basic-rag-implementation)
  * Why: Demonstrates the fundamental Retrieval-Augmented Generation pattern: retrieve context first, then generate answer.
  */
 
 import OpenAI from "openai";
-import { ChromaClient } from "chromadb";
 import { config } from 'dotenv';
 import { join, dirname } from 'path';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { SemanticRetriever } from './utils/semantic_retriever';
 
 // Load environment variables
 config({ path: join(process.cwd(), 'env', '.env') });
 
+const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+
 const openai = new OpenAI();
-const chroma = new ChromaClient();
 
 // ESM-compatible file path resolution
 const __filename = fileURLToPath(import.meta.url);
@@ -26,13 +27,13 @@ const essay = readFileSync(join(__dirname, 'data', 'paul_graham_essay.txt'), 'ut
  * Main function that demonstrates a simple RAG implementation
  * 
  * This example shows how to:
- * 1. Create a vector collection and index documents
+ * 1. Create a semantic (vector) index for documents
  * 2. Retrieve relevant documents for a query
  * 3. Use the retrieved context to generate an answer
  * 
  * This is a single-stage RAG approach suitable for prototypes and simple use cases.
  */
-async function main() {
+async function main(): Promise<void> {
     // Step 1: Initialize the RAG system with knowledge base documents
     // In this example, we split the essay by double newlines to create chunks (paragraphs)
     const documents = essay
@@ -42,87 +43,71 @@ async function main() {
 
     console.log(`Loaded ${documents.length} chunks from the essay.`);
 
-    // Note: In a real app, you would persist the client/collection
-    const rag = new SimpleRAG(chroma, openai);
-    // Initialize with data
+    const rag = new SimpleRAG(openai);
+    // Step 2: Initialize with data
     await rag.initialize(documents);
 
-    // Step 2: Define a query
-    const question = "What did the author work on before college?";
+    // Step 3: Define a query
+    const question = `What did the author work on before college?`;
     console.log(`Question: ${question}`);
 
-    // Step 3: Run the RAG pipeline
+    // Step 4: Run the RAG pipeline
     const answer = await rag.query(question);
 
-    console.log('');
-    console.log('Answer:');
-    console.log(answer);
+    console.log(``);
+    console.log(`Answer:`);
+    console.log(`${answer}`);
 }
 
 class SimpleRAG {
-    private client: ChromaClient;
-    private collection: any;
+    private retriever: SemanticRetriever | null = null;
     private openai: OpenAI;
 
-    constructor(client: ChromaClient, openai: OpenAI) {
-        this.client = client;
+    constructor(openai: OpenAI) {
         this.openai = openai;
     }
 
     async initialize(documents: string[]): Promise<void> {
-        // Create a unique collection for this run to avoid collisions
-        const name = `rag_demo_${Date.now()}`;
-        this.collection = await this.client.createCollection({ name });
-
-        // Store documents. Chroma handles the embeddings by default if no embeddings are provided.
-        // We handle batches of 100 to stay within limits
-        const batchSize = 100;
-        for (let i = 0; i < documents.length; i += batchSize) {
-            const batch = documents.slice(i, i + batchSize);
-            const ids = batch.map((_, idx) => `doc_${i + idx}`);
-
-            await this.collection.add({
-                documents: batch,
-                ids: ids
-            });
-        }
+        // Use the SemanticRetriever (LlamaIndex in-memory)
+        this.retriever = await SemanticRetriever.create(documents);
     }
 
-    async query(question: string, topK: number = 3): Promise<string> {
-        // Step 1: Retrieve relevant documents
-        const results = await this.collection.query({
-            queryTexts: [question],
-            nResults: topK
-        });
+    async query(question: string, topK = 3): Promise<string> {
+        if (!this.retriever) {
+            throw new Error(`RAG system not initialized`);
+        }
 
-        const retrievedDocs = results.documents[0] || [];
-        const context = retrievedDocs.join("\n\n");
+        // Step 1: Retrieve relevant documents
+        const results = await this.retriever.searchRanked(question, topK);
+        const retrievedDocs = results.map(r => r.document);
+        const context = retrievedDocs.join(`\n\n`);
 
         // Log retrieved context for visibility
-        console.log('');
+        console.log(``);
         console.log(`Retrieved Context (${retrievedDocs.length} docs):`);
-        console.log('---');
-        console.log(context);
-        console.log('---');
+        console.log(`---`);
+        console.log(`${context}`);
+        console.log(`---`);
 
         // Step 2: Generate answer using retrieved context
         const response = await this.openai.chat.completions.create({
-            model: "gpt-4o",
+            model: MODEL,
             messages: [
                 {
-                    role: "system",
-                    content: "Answer based only on the provided context. If the context doesn't contain the answer, say so."
+                    role: `system`,
+                    content: `Answer based only on the provided context. If the context doesn't contain the answer, say so.`
                 },
                 {
-                    role: "user",
+                    role: `user`,
                     content: `Context:\n${context}\n\nQuestion: ${question}`
                 }
             ],
-            temperature: 0  // Deterministic for consistency
         });
 
-        return response.choices[0].message.content || "";
+        return response.choices[0].message.content || ``;
     }
 }
 
-await main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main().catch(console.error);
+}

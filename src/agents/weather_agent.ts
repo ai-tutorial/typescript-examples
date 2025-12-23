@@ -42,8 +42,8 @@ async function main() {
 async function runWeatherAgent(userQuery: string): Promise<string> {
     // Step 1: Initialize the LLM with tool calling support
     const model = new ChatOpenAI({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-        modelName: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        openAIApiKey: process.env.OPENAI_API_KEY!,
+        modelName: process.env.OPENAI_MODEL!,
     });
 
     // Step 2: Define the weather tool

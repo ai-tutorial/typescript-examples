@@ -6,19 +6,10 @@
  * Why: Demonstrates how to use OpenAI's prompt caching to reduce costs by 50% on cached portions when system prompts are above 1024 tokens.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 
-// Load environment variables from env/.env file
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Create an OpenAI client instance
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
-const MODEL = process.env.OPENAI_MODEL!;
+const model = createModel();
 
 /**
  * Main function that demonstrates prompt caching with OpenAI
@@ -100,21 +91,21 @@ async function queryWithCaching(query: string, knowledgeBase: string): Promise<s
     console.log(`Query: ${query}`);
     console.log('---');
 
-    const response = await client.chat.completions.create({
-        model: MODEL,
+    const response = await generateText({
+        model,
         messages: [
             {
-                role: "system",
-                content: knowledgeBase  // This gets cached automatically (if >1024 tokens)
+                role: 'system',
+                content: knowledgeBase,  // This gets cached automatically (if >1024 tokens)
             },
             {
-                role: "user",
-                content: query  // This changes with each request
-            }
+                role: 'user',
+                content: query,  // This changes with each request
+            },
         ],
     });
 
-    const content = response.choices[0].message.content || '';
+    const content = response.text;
     console.log(`Response: ${content}`);
     console.log('');
     console.log('Note: First call pays full cost. Subsequent calls (within 5-10 min) get ~50% reduction on cached portion.');

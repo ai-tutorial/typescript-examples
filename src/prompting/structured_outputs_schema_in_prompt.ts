@@ -7,16 +7,11 @@
  *      the schema structure. Simpler than using structured outputs API but less reliable.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 import { JSONUtils } from '../utils/JSONUtils';
 
-// Load environment variables from env/.env
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Setup
-const MODEL = process.env.OPENAI_MODEL!;
+const model = createModel();
 
 /**
  * Contract type definition
@@ -37,10 +32,6 @@ type Contract = {
  * This approach is simpler but less reliable than using structured outputs API alone.
  */
 async function main(): Promise<void> {
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
     const contractText = `
     This Services Agreement is effective January 15, 2025.
     Provider delivers monthly support; Client pays $5,000 net 30.
@@ -58,15 +49,16 @@ async function main(): Promise<void> {
 
     Return only valid JSON matching the schema above.`;
 
-    // Step 3: Call the API with response_format: json_object
-    const response = await client.chat.completions.create({
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
+    // Step 3: Call the API
+    const response = await generateText({
+        model,
+        messages: [
+            { role: 'user', content: prompt },
+        ],
     });
 
     // Step 4: Parse and validate the response against the schema
-    const content = response.choices[0].message.content!;
+    const content = response.text;
     const parsed = JSON.parse(content);
     const validated = JSONUtils.validateJson<Contract>(parsed, CONTRACT_SCHEMA);
 

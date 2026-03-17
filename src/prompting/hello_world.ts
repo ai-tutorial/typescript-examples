@@ -7,18 +7,7 @@
  */
 
 import { generateText } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { google } from '@ai-sdk/google';
-import { config } from 'dotenv';
-import { join } from 'path';
-
-// Load environment variables from env/.env file
-config({ path: join(process.cwd(), 'env', '.env') });
-
-const models = {
-    openai: openai('gpt-4o-mini'),
-    gemini: google('gemini-2.0-flash'),
-};
+import { createModel } from './utils.js';
 
 /**
  * Main function that demonstrates a basic Vercel AI SDK call
@@ -29,15 +18,14 @@ const models = {
  * This is the foundation for all other LLM interactions.
  */
 async function main(): Promise<void> {
-    const provider = (process.env.AI_PROVIDER ?? 'openai') as keyof typeof models;
-    const model = models[provider];
+    const model = createModel();
 
     const { text } = await generateText({
         model,
         prompt: 'Say hello in 4 words.',
     });
 
-    console.log(`Response (${provider}):`, text);
+    console.log('Response:', text);
 }
 
 await main();

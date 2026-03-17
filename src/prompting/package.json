@@ -3,6 +3,9 @@
     "version": "1.0.0",
     "type": "module",
     "description": "Prompting techniques and patterns for AI Tutorial",
+    "scripts": {
+        "test:prompting": "ROOT=$(cd ../.. && pwd) && for f in *.ts; do echo \"\\n=== Running $f ===\"; (cd \"$ROOT\" && npx tsx \"src/prompting/$f\") || exit 1; done"
+    },
     "dependencies": {
         "@ai-sdk/google": "^3.0.43",
         "@ai-sdk/openai": "^3.0.41",

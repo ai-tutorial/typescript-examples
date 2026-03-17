@@ -7,16 +7,11 @@
  *      to follow the XML structure. Simpler but less reliable than programmatic validation.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 import { XMLUtils } from '../utils/XMLUtils';
 
-// Load environment variables from env/.env
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Setup
-const MODEL = process.env.OPENAI_MODEL!;
+const model = createModel();
 
 /**
  * Example XML structure for reference
@@ -48,10 +43,6 @@ const EXAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
  * This approach is simpler but less reliable than programmatic validation.
  */
 async function main(): Promise<void> {
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
     const contractText = `
     This Services Agreement is effective January 15, 2025.
     Provider delivers monthly support; Client pays $5,000 net 30.
@@ -75,13 +66,15 @@ async function main(): Promise<void> {
     Return only valid XML matching the schema above. Do not include any text outside the XML tags.`;
 
     // Step 3: Call the API
-    const response = await client.chat.completions.create({
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
+    const response = await generateText({
+        model,
+        messages: [
+            { role: 'user', content: prompt },
+        ],
     });
 
     // Step 4: Extract XML from response, parse and validate
-    const content = response.choices[0].message.content!;
+    const content = response.text;
     const xmlContent = XMLUtils.extractXmlFromMarkdown(content);
     const parsed = XMLUtils.parseContractXml(xmlContent);
     const validated = XMLUtils.validateContract(parsed);

@@ -7,19 +7,10 @@
  *      tend to reduce hallucinations and parsing errors while improving reliability in production.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 
-// Load environment variables from env/.env
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Setup    
-const MODEL = process.env.OPENAI_MODEL!;
-
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+const model = createModel();
 
 /**
  * Main function that demonstrates structured prompt engineering
@@ -69,14 +60,14 @@ async function main(): Promise<void> {
 
     Response:`;
 
-    const response = await client.chat.completions.create({
-        model: MODEL,
+    const response = await generateText({
+        model,
         messages: [
-            { role: 'user', content: prompt }
-        ]
+            { role: 'user', content: prompt },
+        ],
     });
 
-    const content = response.choices[0].message.content || '';
+    const content = response.text;
 
     console.log('--- Structured Prompt Example ---');
     console.log('Customer Message:', customerMessage);

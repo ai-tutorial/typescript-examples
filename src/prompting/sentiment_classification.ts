@@ -6,19 +6,10 @@
  * Why: Demonstrates how to systematically test and improve prompts by defining success criteria, creating evaluation datasets, and iterating on prompt design.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 
-// Load environment variables from env/.env file
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Create an OpenAI client instance
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
-const MODEL = process.env.OPENAI_MODEL!;
+const model = createModel();
 
 type EvaluationItem = {
     message: string;
@@ -149,14 +140,14 @@ async function analyzeFailures(promptTemplate: string, evalData: EvaluationItem[
  */
 async function generatePrediction(prompt: string): Promise<string> {
     console.log(`[API Call] Sending prompt: "${prompt.replace(/\n/g, ' ').substring(0, 50)}..."`);
-    const response = await client.chat.completions.create({
-        model: MODEL,
+    const response = await generateText({
+        model,
         messages: [
-            { role: 'user', content: prompt }
+            { role: 'user', content: prompt },
         ],
     });
 
-    const content = response.choices[0].message.content || '';
+    const content = response.text;
     const lowerContent = content.toLowerCase();
 
     let result: string;

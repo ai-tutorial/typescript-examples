@@ -6,20 +6,12 @@
  * Why: Demonstrates how to reduce costs by trying a cheap model first and escalating to an expensive model only when confidence is low.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import './utils.js'; // loads env
 
-// Load environment variables from env/.env file
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Create an OpenAI client instance
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
-const CHEAP_MODEL = 'gpt-3.5-turbo';
-const EXPENSIVE_MODEL = 'gpt-4o';
+const cheapModel = openai('gpt-4o-mini');
+const expensiveModel = openai('gpt-4o');
 
 type ClassificationResult = {
     sentiment: string;
@@ -78,15 +70,14 @@ async function cascadedClassification(
     sentiment: positive|neutral|negative
     confidence: [0.0-1.0]`;
 
-    const cheapResponse = await client.chat.completions.create({
-        model: CHEAP_MODEL,
+    const cheapResponse = await generateText({
+        model: cheapModel,
         messages: [
-            { role: 'user', content: cheapPrompt }
+            { role: 'user', content: cheapPrompt },
         ],
-        temperature: 0.3,
     });
 
-    const cheapContent = cheapResponse.choices[0].message.content || '';
+    const cheapContent = cheapResponse.text;
     const parsed = parseResponse(cheapContent);
 
     let result: ClassificationResult;
@@ -95,8 +86,8 @@ async function cascadedClassification(
     if (parsed.confidence >= confidenceThreshold) {
         result = {
             sentiment: parsed.sentiment,
-            model: CHEAP_MODEL,
-            cost: 0.0005  // Approximate cost per 1K tokens for GPT-3.5 Turbo
+            model: 'gpt-4o-mini',
+            cost: 0.0005
         };
     } else {
         // Step 3: Escalate to expensive model
@@ -107,21 +98,20 @@ async function cascadedClassification(
         Output format:
         sentiment: positive|neutral|negative`;
 
-        const expensiveResponse = await client.chat.completions.create({
-            model: EXPENSIVE_MODEL,
+        const expensiveResponse = await generateText({
+            model: expensiveModel,
             messages: [
-                { role: 'user', content: expensivePrompt }
+                { role: 'user', content: expensivePrompt },
             ],
-            temperature: 0.3,
         });
 
-        const expensiveContent = expensiveResponse.choices[0].message.content || '';
+        const expensiveContent = expensiveResponse.text;
         const finalSentiment = extractSentiment(expensiveContent);
 
         result = {
             sentiment: finalSentiment,
-            model: EXPENSIVE_MODEL,
-            cost: 0.01  // Approximate cost per 1K tokens for GPT-4 Turbo
+            model: 'gpt-4o',
+            cost: 0.01
         };
     }
 

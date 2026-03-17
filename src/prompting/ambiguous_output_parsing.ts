@@ -6,19 +6,10 @@
  * Why: Demonstrates how ambiguous prompts lead to unpredictable output formats and how specifying output structure ensures consistent, parseable responses.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 
-// Load environment variables from env/.env file
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Create an OpenAI client instance
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
-
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const model = createModel();
 
 /**
  * Main function that demonstrates ambiguous output parsing problem and solution
@@ -86,22 +77,21 @@ async function demonstrateAmbiguousPrompt(customerMessage: string): Promise<stri
     console.log(`Prompt: ${prompt}`);
     console.log('---');
 
-    const response = await client.chat.completions.create({
-        model: MODEL,
+    const response = await generateText({
+        model,
         messages: [
-            { role: 'user', content: prompt }
+            { role: 'user', content: prompt },
         ],
-        temperature: 0.7,
     });
 
-    const content = response.choices[0].message.content || '';
+    const content = response.text;
     console.log(`Model Response: ${content}`);
-    
+
     const extracted = extractEmail(content);
     console.log(`Extracted Email: ${extracted || 'Could not extract reliably'}`);
     console.log('Note: Response format is unpredictable - could be "The email is...", "john@example.com", "Email: ...", etc.');
     console.log('---');
-    
+
     return content;
 }
 
@@ -124,22 +114,21 @@ async function demonstrateStructuredPrompt(customerMessage: string): Promise<str
     console.log(`Prompt: ${prompt}`);
     console.log('---');
 
-    const response = await client.chat.completions.create({
-        model: MODEL,
+    const response = await generateText({
+        model,
         messages: [
-            { role: 'user', content: prompt }
+            { role: 'user', content: prompt },
         ],
-        temperature: 0.7,
     });
 
-    const content = response.choices[0].message.content || '';
+    const content = response.text;
     console.log(`Model Response: ${content}`);
-    
+
     const extracted = parseStructuredEmail(content);
     console.log(`Extracted Email: ${extracted || 'Could not extract'}`);
     console.log('Note: Response format is consistent and easily parseable');
     console.log('---');
-    
+
     return content;
 }
 

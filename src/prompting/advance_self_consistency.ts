@@ -7,19 +7,10 @@
  *      a majority vote. Reduces the impact of individual reasoning errors.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 
-// Load environment variables from env/.env
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Setup
-const MODEL = 'gpt-4o-mini';
-
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+const model = createModel();
 
 /**
  * Main function that demonstrates advanced self-consistency technique
@@ -57,18 +48,21 @@ async function generateReasoningPaths(problem: string, numPaths: number): Promis
             const temperature = temperatures[i] || 0.7;
             console.log(`Path ${i + 1}/${numPaths} (temperature: ${temperature})...`);
 
-            const prompt = `Solve the following problem step by step. Show your reasoning and end with "The answer is: [your answer]".
-
-    Problem: ${problem}
-
-    Let's think step by step:`;
-
-            const response = await client.chat.completions.create({
-                model: MODEL,
-                messages: [{ role: 'user', content: prompt }],
+            const response = await generateText({
+                model,
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a careful math tutor. Solve problems step by step and end with "The answer is: [your answer]".',
+                    },
+                    {
+                        role: 'user',
+                        content: `Solve the following problem step by step.\n\nProblem: ${problem}\n\nLet's think step by step:`,
+                    },
+                ],
             });
 
-            const path = response.choices[0].message.content || '';
+            const path = response.text;
 
             await new Promise(resolve => setTimeout(resolve, 100));
 

@@ -7,19 +7,10 @@
  *      a majority vote. Reduces the impact of individual reasoning errors.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 
-// Load environment variables from env/.env
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Setup
-const MODEL = 'gpt-4o-mini'; // Need gpt-4o or gpt-4o-mini for this example
-
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+const model = createModel();
 
 /**
  * Main function that demonstrates self-consistency technique
@@ -63,13 +54,14 @@ async function generateReasoningPaths(problem: string, numPaths: number): Promis
 
     Let's think step by step:`;
 
-            const response = await client.chat.completions.create({
-                model: MODEL,
-                messages: [{ role: 'user', content: prompt }],
-                temperature: temperature,
+            const response = await generateText({
+                model,
+                messages: [
+                    { role: 'user', content: prompt },
+                ],
             });
 
-            const path = response.choices[0].message.content || '';
+            const path = response.text;
 
             await new Promise(resolve => setTimeout(resolve, 100));
 

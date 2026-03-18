@@ -1,7 +1,6 @@
 import { readFile } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import Ajv from 'ajv';
 
 /**
  * JSON Schema type definition
@@ -53,20 +52,49 @@ export class JSONUtils {
     }
 
     /**
-     * Validate data against JSON schema using Ajv
+     * Validate data against JSON schema
      * @param data - Data to validate (unknown type)
      * @param schema - JSON schema to validate against
      * @returns Validated data as type T
      * @throws Error if validation fails
      */
     static validateJson<T>(data: unknown, schema: JsonSchema): T {
-        const ajv = new Ajv();
-        const validate = ajv.compile(schema);
-        if (validate(data)) {
-            return data as T;
-        } else {
-            throw new Error(`Schema validation failed: ${JSON.stringify(validate.errors, null, 2)}`);
+        if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+            throw new Error('Schema validation failed: expected an object');
         }
+        const record = data as Record<string, unknown>;
+        const errors: string[] = [];
+
+        for (const field of schema.required) {
+            if (!(field in record)) {
+                errors.push(`missing required field: "${field}"`);
+            }
+        }
+
+        for (const [key, prop] of Object.entries(schema.properties)) {
+            if (!(key in record)) continue;
+            const value = record[key];
+            if (prop.type === 'array') {
+                if (!Array.isArray(value)) {
+                    errors.push(`"${key}" should be array`);
+                }
+            } else if (typeof value !== prop.type) {
+                errors.push(`"${key}" should be ${prop.type}, got ${typeof value}`);
+            }
+        }
+
+        if (!schema.additionalProperties) {
+            for (const key of Object.keys(record)) {
+                if (!(key in schema.properties)) {
+                    errors.push(`unexpected field: "${key}"`);
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error(`Schema validation failed:\n${errors.join('\n')}`);
+        }
+        return data as T;
     }
 }
 

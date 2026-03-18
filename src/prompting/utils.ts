@@ -7,8 +7,8 @@ import { join } from 'path';
 config({ path: join(process.cwd(), 'env', '.env') });
 
 const models = {
-    openai: openai('gpt-4o-mini'),
-    gemini: google('gemini-2.0-flash'),
+    openai: openai(process.env.OPENAI_MODEL || 'gpt-4.1-nano'),
+    gemini: google(process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite'),
 };
 
 export type Provider = keyof typeof models;

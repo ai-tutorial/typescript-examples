@@ -62,7 +62,7 @@ export async function extractTableWithVision(imagePath: string): Promise<string>
                 ]
             }
         ],
-        max_tokens: 1000
+        max_completion_tokens: 1000
     });
 
     return response.choices[0].message.content || "";

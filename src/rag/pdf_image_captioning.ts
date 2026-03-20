@@ -62,7 +62,7 @@ export async function generateImageCaption(imagePath: string): Promise<string> {
                 ]
             }
         ],
-        max_tokens: 300
+        max_completion_tokens: 300
     });
 
     return response.choices[0].message.content || "";

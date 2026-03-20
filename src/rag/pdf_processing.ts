@@ -72,11 +72,11 @@ export async function extractScannedPdf(pdfPath: string): Promise<string> {
         text += `Page ${i + 1}:\n${pageText}\n\n`;
 
         // Cleanup image
-        fs.unlinkSync(images[i]);
+        fs.rmSync(images[i]);
     }
 
     await worker.terminate();
-    fs.rmdirSync(outputDir);
+    fs.rmSync(outputDir, { recursive: true, force: true });
 
     return text;
 }

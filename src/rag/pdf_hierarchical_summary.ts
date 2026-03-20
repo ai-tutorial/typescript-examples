@@ -51,7 +51,7 @@ export async function hierarchicalSummary(
                 { role: "system", content: "Summarize this section concisely." },
                 { role: "user", content: chunk }
             ],
-            max_tokens: 150
+            max_completion_tokens: 150
         });
         const summary = response.choices[0].message.content || "";
         console.log(`  - Chunk ${i + 1} summarized.`);
@@ -74,7 +74,7 @@ export async function hierarchicalSummary(
                 content: combined
             }
         ],
-        max_tokens: 500
+        max_completion_tokens: 500
     });
 
     return finalResponse.choices[0].message.content || "";

@@ -10,7 +10,7 @@
   },
   "stackblitz": {
     "installDependencies": true,
-    "startCommand": "sh welcome.sh"
+    "startCommand": "sh welcome.sh && ./run.sh"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",

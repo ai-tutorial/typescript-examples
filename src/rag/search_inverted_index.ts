@@ -6,7 +6,7 @@
 
 import OpenAI from "openai";
 import { config } from 'dotenv';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { LexicalRetriever } from './utils/lexical_retriever';
@@ -25,8 +25,6 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
  */
 async function main(): Promise<void> {
     const openai = new OpenAI();
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
     const essayPath = join(process.cwd(), 'assets', 'paul_graham_essay.txt');
     const essay = readFileSync(essayPath, 'utf-8');
 

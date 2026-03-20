@@ -13,30 +13,6 @@ const colors = {
   blue: '\x1b[34m',
 };
 
-// Wait for config file to be created by the CodeEditor SDK.
-// The SDK connects after StackBlitz boots and writes env/run.conf via applyFsDiff.
-// This wait handles the race where run.sh executes before the SDK has connected.
-const waitForConfigFile = async (): Promise<void> => {
-  if (existsSync(CONFIG_FILE)) return;
-
-  console.log(colors.yellow + '⏳ Waiting for configuration from editor...' + colors.reset);
-
-  const MAX_WAIT_MS = 30000;
-  const POLL_MS = 500;
-  let elapsed = 0;
-
-  while (elapsed < MAX_WAIT_MS) {
-    await new Promise(r => setTimeout(r, POLL_MS));
-    elapsed += POLL_MS;
-    if (existsSync(CONFIG_FILE)) {
-      console.log(colors.green + '✓ Configuration received' + colors.reset);
-      return;
-    }
-  }
-
-  // Timed out — fall through to readConfigFile which will show the error
-};
-
 // Read config file and extract file path
 const readConfigFile = (): string => {
   try {
@@ -112,7 +88,7 @@ const executeFile = (filePath: string): void => {
 };
 
 // Main function
-const main = async (): Promise<void> => {
+const main = (): void => {
   try {
     // Check if file path is provided as command line argument
     let filePath: string | null = null;
@@ -120,9 +96,8 @@ const main = async (): Promise<void> => {
       filePath = process.argv[2];
     }
 
-    // If no argument provided, wait for SDK to write config then read it
+    // If no argument provided, read from config file
     if (!filePath) {
-      await waitForConfigFile();
       filePath = readConfigFile();
     }
 

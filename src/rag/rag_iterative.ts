@@ -80,7 +80,7 @@ class IterativeRAG {
             model: "gpt-4o-mini",  // Cheap model fine for query refinement
             messages: [{ role: "user", content: refinementPrompt }],
             temperature: 0.3,
-            max_tokens: 100
+            max_completion_tokens: 100
         });
 
         return response.choices[0].message.content || originalQuery;

@@ -63,7 +63,7 @@ Do NOT use for:
         inputSchema: searchKnowledgeBaseSchema
     },
     async (args) => {
-        const { query, category } = args;
+        const { category } = args;
 
         // Mock knowledge base search
         const mockArticles = [
@@ -187,7 +187,7 @@ Use when:
         inputSchema: createSupportTicketSchema
     },
     async (args) => {
-        const { customer_email, subject, description, priority = 'medium' } = args;
+        const { priority = 'medium' } = args;
 
         // Mock ticket creation
         const ticketId = `TKT-${Math.floor(Math.random() * 100000)}`;

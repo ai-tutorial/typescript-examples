@@ -7,7 +7,7 @@
 import OpenAI from 'openai';
 import { config } from 'dotenv';
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { LexicalRetriever } from './utils/lexical_retriever';
 import { SemanticRetriever } from './utils/semantic_retriever';
@@ -16,9 +16,6 @@ import { SemanticRetriever } from './utils/semantic_retriever';
 config({ path: join(process.cwd(), 'env', '.env') });
 
 const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const openai = new OpenAI();
 

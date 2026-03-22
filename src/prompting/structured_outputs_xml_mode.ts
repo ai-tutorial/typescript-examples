@@ -7,16 +7,11 @@
  *      Note that OpenAI's API doesn't have a native XML response format like json_object.
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 import { XMLUtils } from '../utils/XMLUtils';
 
-// Load environment variables from env/.env
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Setup
-const MODEL = process.env.OPENAI_MODEL!;
+const model = createModel();
 
 /**
  * Example XML structure for reference
@@ -48,10 +43,6 @@ const EXAMPLE_XML = `<?xml version="1.0" encoding="UTF-8"?>
  * This approach requires more parsing than JSON but provides structured output.
  */
 async function main(): Promise<void> {
-    const client = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    });
-
     const contractText = `
     This Services Agreement is effective January 15, 2025.
     Provider delivers monthly support; Client pays $5,000 net 30.
@@ -74,15 +65,16 @@ async function main(): Promise<void> {
 
     Return only valid XML. Start with <?xml version="1.0" encoding="UTF-8"?> and wrap everything in a <contract> root element.`;
 
-    // Step 2: Call the API (no native XML format, so we rely on prompt engineering)
-    const response = await client.chat.completions.create({
-        model: MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
+    // Step 2: Call the API
+    const response = await generateText({
+        model,
+        messages: [
+            { role: 'user', content: prompt },
+        ],
     });
 
     // Step 3: Extract XML from the response (may be wrapped in markdown)
-    const content = response.choices[0].message.content!;
+    const content = response.text;
     const xmlContent = XMLUtils.extractXmlFromMarkdown(content);
     
     // Step 4: Parse and validate the XML structure

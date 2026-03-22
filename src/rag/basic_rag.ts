@@ -6,7 +6,7 @@
 
 import OpenAI from "openai";
 import { config } from 'dotenv';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { SemanticRetriever } from './utils/semantic_retriever';
@@ -19,8 +19,6 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const openai = new OpenAI();
 
 // ESM-compatible file path resolution
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const essay = readFileSync(join(process.cwd(), 'assets', 'paul_graham_essay.txt'), 'utf-8');
 
 /**

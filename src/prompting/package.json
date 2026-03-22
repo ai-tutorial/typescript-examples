@@ -3,14 +3,18 @@
     "version": "1.0.0",
     "type": "module",
     "description": "Prompting techniques and patterns for AI Tutorial",
+    "scripts": {
+        "test:prompting": "ROOT=$(cd ../.. && pwd) && for f in *.ts; do echo \"\\n=== Running $f ===\"; (cd \"$ROOT\" && npx tsx \"src/prompting/$f\") || exit 1; done"
+    },
     "dependencies": {
+        "@ai-sdk/google": "^3.0.43",
+        "@ai-sdk/openai": "^3.0.41",
         "@anthropic-ai/sdk": "^0.71.2",
-        "ajv": "^8.17.1",
+        "ai": "^6.0.116",
+
         "dotenv": "^17.2.3",
         "fast-xml-parser": "^4.3.6",
-        "openai": "^6.9.1",
-        "xml-escape": "^1.1.0",
-        "zod": "^4.2.1"
+        "xml-escape": "^1.1.0"
     },
     "devDependencies": {
         "@types/node": "^24.10.1",

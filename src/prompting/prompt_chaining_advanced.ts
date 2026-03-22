@@ -8,19 +8,10 @@
  * Chain steps: classify → extract → (optional) search → respond
  */
 
-import OpenAI from 'openai';
-import { config } from 'dotenv';
-import { join } from 'path';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 
-// Load environment variables from env/.env
-config({ path: join(process.cwd(), 'env', '.env') });
-
-// Setup
-const MODEL = process.env.OPENAI_MODEL!;
-
-const client: OpenAI = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+const model = createModel();
 
 /**
  * Main function that demonstrates the prompt chaining approach
@@ -66,15 +57,14 @@ User message: "${userMessage}"
 
 Respond with ONLY the category name (question, request, complaint, feedback, or other):`;
 
-    const response = await client.chat.completions.create({
-        model: MODEL,
+    const response = await generateText({
+        model,
         messages: [
-            { role: 'user', content: classificationPrompt }
+            { role: 'user', content: classificationPrompt },
         ],
-        temperature: 0.1, // Low temperature for consistent classification
     });
 
-    const category = (response.choices[0].message.content || 'other').trim().toLowerCase();
+    const category = (response.text || 'other').trim().toLowerCase();
     return category;
 }
 
@@ -102,16 +92,14 @@ Extract and return a JSON object with the following structure:
 
 Respond with ONLY valid JSON, no additional text:`;
 
-    const response = await client.chat.completions.create({
-        model: MODEL,
+    const response = await generateText({
+        model,
         messages: [
-            { role: 'user', content: extractionPrompt }
+            { role: 'user', content: extractionPrompt },
         ],
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
     });
 
-    const content = response.choices[0].message.content || '{}';
+    const content = response.text || '{}';
     try {
         const extracted = JSON.parse(content) as Record<string, string>;
         return extracted;
@@ -156,15 +144,14 @@ Generate a helpful, concise response (2-3 sentences) that:
 
 Response:`;
 
-    const response = await client.chat.completions.create({
-        model: MODEL,
+    const response = await generateText({
+        model,
         messages: [
-            { role: 'user', content: responsePrompt }
+            { role: 'user', content: responsePrompt },
         ],
-        temperature: 0.7,
     });
 
-    return response.choices[0].message.content || 'I apologize, but I was unable to generate a response.';
+    return response.text || 'I apologize, but I was unable to generate a response.';
 }
 
 /**

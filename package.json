@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "run": "./run.sh",
+    "test:prompting": "for f in src/prompting/*.ts; do [ \"$(basename $f)\" = utils.ts ] && continue; echo \"\\n--- Running $f ---\"; npx tsx \"$f\" || exit 1; done",
     "postinstall": "chmod +x run.sh welcome.sh && sh welcome.sh"
   },
   "stackblitz": {
@@ -13,11 +14,14 @@
   },
   "devDependencies": {
     "ts-node": "^10.9.2",
-    "tsx": "^4.20.6",
-    "typescript": "~5.9.3"
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3",
+    "@types/xml-escape": "^1.1.3"
   },
   "dependencies": {
-    "@types/node": "^24.10.1",
-    "dotenv": "^17.2.3"
+    "@types/node": "^25.5.0",
+    "dotenv": "^17.3.1",
+    "fast-xml-parser": "^5.5.8",
+    "xml-escape": "^1.1.0"
   }
 }

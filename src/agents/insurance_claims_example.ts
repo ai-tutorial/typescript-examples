@@ -9,7 +9,7 @@ import 'dotenv/config';
 import { createAgent, tool } from 'langchain';
 import { MemorySaver } from '@langchain/langgraph';
 import { z } from 'zod';
-import { createModel } from '../agents/langchain_utils.js';
+import { createModel } from './langchain_utils.js';
 
 // ============================================================
 // Insurance Claims Validation (deterministic rules)

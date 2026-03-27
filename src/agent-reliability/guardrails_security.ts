@@ -16,7 +16,11 @@ interface PIIMatch {
 
 /**
  * Detect PII patterns in text using regex.
- * In production, use a dedicated library like Presidio.
+ *
+ * Production alternative: Microsoft Presidio (https://microsoft.github.io/presidio/)
+ * provides NER-based detection with higher accuracy. Deploy as a Docker container
+ * and call its REST API from TypeScript:
+ *   POST http://presidio:5001/analyze { text, language: "en" }
  */
 function detectPII(text: string): PIIMatch[] {
     const patterns: [string, RegExp][] = [

@@ -14,13 +14,11 @@ import { createModel } from './langchain_utils.js';
 // ============================================================
 // Pattern 1: Validation Tool (deterministic rule enforcement)
 // ============================================================
-
-/**
- * Expense report validation — rules enforced in code, not prompts.
- *
- * Why not prompts? LLMs enforce rules ~85% of the time.
- * A validation tool enforces them 100%.
- */
+//
+// Fix: Move the rules into a validation function that the agent MUST
+// call before approving anything. The LLM handles natural language
+// (understanding the expense), code handles the rules (checking limits).
+// Result: 100% rule enforcement.
 interface ExpenseItem {
     category: string;
     amount: number;
@@ -70,11 +68,10 @@ function validateExpense(expense: ExpenseItem): ValidationResult {
 // ============================================================
 // Pattern 2: Pre/Post Execution Guardrails
 // ============================================================
-
-/**
- * Pre-execution: validate BEFORE the tool runs.
- * Post-execution: validate the result AFTER.
- */
+//
+// Fix: Add validation at two checkpoints:
+// - Pre-execution: check if the action is allowed BEFORE running it
+// - Post-execution: scan the output BEFORE returning it to the user
 function preValidateRefund(amount: number, orderAge: number): { allowed: boolean; reason?: string } {
     if (amount > 1000) return { allowed: false, reason: 'Refunds over $1000 require manager approval' };
     if (orderAge > 90) return { allowed: false, reason: 'Order is older than 90 days — refund period expired' };

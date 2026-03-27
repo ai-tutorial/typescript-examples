@@ -1,72 +1,76 @@
 /**
- * Costs & Safety: Uses OpenAI GPT-4o Vision API. Each call costs tokens based on image size.
+ * Vision Table Extraction
+ *
+ * Costs & Safety: Real API calls; cost depends on image size. Requires API key(s).
  * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-unstructured-data#vision-language-models-for-tables)
  * Why: Vision models can "see" table structures (merged cells, multi-level headers) that OCR often messes up.
  */
 
-import OpenAI from "openai";
-import { config } from 'dotenv';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 import { join } from 'path';
 import { readFileSync, existsSync } from 'fs';
 
-// Load environment variables
-config({ path: join(process.cwd(), 'env', '.env') });
+/**
+ * Use a vision model to extract table structure and content from an image.
+ * Robust against: complex layouts, handwriting, merged cells.
+ */
+export async function extractTableWithVision(
+    model: ReturnType<typeof createModel>,
+    imagePath: string
+): Promise<string> {
+    const imageBuffer = readFileSync(imagePath);
 
-const openai = new OpenAI();
+    const { text } = await generateText({
+        model,
+        messages: [
+            {
+                role: 'user',
+                content: [
+                    {
+                        type: 'text',
+                        text: 'Extract this table into markdown format. Preserve all data, structure, and headers precisely.',
+                    },
+                    {
+                        type: 'image',
+                        image: imageBuffer,
+                        mediaType: 'image/png',
+                    },
+                ],
+            },
+        ],
+    });
 
-async function main() {
-    console.log("--- Vision Table Extraction ---");
+    return text;
+}
 
-    // Example image path (ensure you have this file or use a placeholder)
+/**
+ * Main function that demonstrates vision-based table extraction
+ *
+ * This example shows how to use a vision model to extract structured data
+ * from table images, handling complex layouts that OCR often fails on.
+ *
+ * The vision approach preserves merged cells, multi-level headers, and formatting.
+ */
+async function main(): Promise<void> {
+    const model = createModel();
+
+    console.log('--- Vision Table Extraction ---');
+
+    // Step 1: Locate image
     const imagePath = join(process.cwd(), 'assets', 'complex_table.png');
 
     if (!existsSync(imagePath)) {
         console.error(`\n[Error] Example image not found at: ${imagePath}`);
-        console.error("Please add a table image file to path to test extraction.");
+        console.error('Please add a table image file to path to test extraction.');
         return;
     }
 
+    // Step 2: Extract table
     console.log(`Processing image: ${imagePath}...`);
-    const markdownTable = await extractTableWithVision(imagePath);
-    console.log("\nExtracted Table (Markdown):");
-    console.log(markdownTable);
+    const markdownTable = await extractTableWithVision(model, imagePath);
+    console.log('\nExtracted Table (Markdown):');
+    console.log(`${markdownTable}`);
 }
 
-/**
- * Use GPT-4 Vision/Omni to extract table structure and content.
- * Robust against: complex layouts, handwriting, merged cells.
- */
-export async function extractTableWithVision(imagePath: string): Promise<string> {
-    // 1. Encode image to Base64
-    const imageBuffer = readFileSync(imagePath);
-    const base64Image = imageBuffer.toString('base64');
-    const dataUrl = `data:image/png;base64,${base64Image}`;
-
-    // 2. Call Vision Model
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-            {
-                role: "user",
-                content: [
-                    {
-                        type: "text",
-                        text: "Extract this table into markdown format. Preserve all data, structure, and headers precisely."
-                    },
-                    {
-                        type: "image_url",
-                        image_url: {
-                            url: dataUrl
-                        }
-                    }
-                ]
-            }
-        ],
-        max_completion_tokens: 1000
-    });
-
-    return response.choices[0].message.content || "";
-}
-
-// Execute main
 await main();

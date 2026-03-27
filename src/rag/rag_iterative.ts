@@ -1,28 +1,119 @@
 /**
- * Costs & Safety: Uses OpenAI API for query refinement and generation. Multiple calls per query.
+ * Iterative RAG with Query Refinement
+ *
+ * Costs & Safety: Real API calls; multiple calls per query. Requires API key(s).
  * Module reference: [Advanced RAG Patterns](https://aitutorial.dev/rag/advanced-rag-patterns#pattern-2-iterative-rag-query-refinement)
  * Why: Helps when user queries are vague. Uses the LLM to refine the search query based on initial results.
  */
 
-import OpenAI from "openai";
-import { config } from 'dotenv';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 import { SemanticRetriever } from './utils/semantic_retriever';
 
-// Load environment variables
-config({ path: join(process.cwd(), 'env', '.env') });
+/**
+ * Use the LLM to refine a vague query based on initial retrieval results
+ */
+async function refineQuery(
+    model: ReturnType<typeof createModel>,
+    originalQuery: string,
+    retrievedDocs: string[]
+): Promise<string> {
+    const refinementPrompt = `
+        Original query: ${originalQuery}
 
-const openai = new OpenAI();
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o';
+        Initial search returned these documents:
+        ${retrievedDocs.slice(0, 2).map(d => `- ${d}`).join('\n')}
+
+        The documents might provide clues. Generate a refined,
+        more specific query to find more details.
+
+        Refined query:
+        `;
+
+    const { text } = await generateText({
+        model,
+        messages: [{ role: 'user', content: refinementPrompt }],
+    });
+
+    return text || originalQuery;
+}
+
+/**
+ * Generate a final answer from accumulated retrieved documents
+ */
+async function generateAnswer(
+    model: ReturnType<typeof createModel>,
+    question: string,
+    context: string
+): Promise<string> {
+    const { text } = await generateText({
+        model,
+        messages: [{
+            role: 'user',
+            content: `Context:\n${context}\n\nQuestion: ${question}`,
+        }],
+    });
+
+    return text;
+}
+
+/**
+ * Run the iterative RAG loop: retrieve, check confidence, refine query, repeat
+ */
+async function iterativeQuery(
+    model: ReturnType<typeof createModel>,
+    retriever: SemanticRetriever,
+    question: string,
+    maxIterations: number = 2
+): Promise<{ answer: string; iterations: number; finalQuery: string }> {
+    let currentQuery = question;
+    const allDocs: string[] = [];
+
+    let iteration = 0;
+    for (iteration = 0; iteration < maxIterations; iteration++) {
+        console.log(`\n[Iteration ${iteration + 1}] Searching for: "${currentQuery}"`);
+
+        const results = await retriever.searchRanked(currentQuery, 3);
+        const docs = results.map(r => r.document);
+        allDocs.push(...docs);
+
+        if (results.length > 0 && results[0].score > 0.88) {
+            console.log('  -> Found high confidence match, stopping.');
+            break;
+        }
+
+        if (iteration < maxIterations - 1) {
+            console.log('  -> Results insufficient, refining query...');
+            const refinedQuery = await refineQuery(model, question, docs);
+            currentQuery = refinedQuery.replace(/"/g, '');
+            console.log(`  -> Refined to: '${currentQuery}'`);
+        }
+    }
+
+    const uniqueDocs = Array.from(new Set(allDocs)).join('\n\n');
+    const answer = await generateAnswer(model, question, uniqueDocs);
+
+    return {
+        answer,
+        iterations: iteration + 1,
+        finalQuery: currentQuery,
+    };
+}
 
 /**
  * Main function demonstrating Iterative RAG
+ *
+ * This example shows how to iteratively refine vague queries using the LLM
+ * to improve retrieval results before generating a final answer.
+ *
+ * Each iteration retrieves documents, checks confidence, and refines the query if needed.
  */
-async function main() {
-    console.log("--- Iterative RAG Example ---");
+async function main(): Promise<void> {
+    const model = createModel();
 
-    // 1. Setup Data
+    console.log('--- Iterative RAG Example ---');
+
+    // Step 1: Setup Data
     const essayText = `
         The January 2025 outage was caused by a configuration error in the primary database cluster.
         It started at 14:00 UTC and was resolved by 16:30 UTC.
@@ -31,118 +122,21 @@ async function main() {
         Users experienced 503 errors during this period.
         The engineering team has since implemented automated config validation.
     `;
-    // Chunking
     const documents = essayText.split('.').map(s => s.trim()).filter(s => s.length > 0);
 
-    console.log("Initializing Retriever...");
+    console.log('Initializing Retriever...');
     const retriever = await SemanticRetriever.create(documents);
 
-    const iterativeRag = new IterativeRAG(retriever);
-
-    // 2. Run Vague Query
-    const vagueQuery = "Tell me about the outage";
+    // Step 2: Run Vague Query
+    const vagueQuery = 'Tell me about the outage';
     console.log(`\nOriginal Query: "${vagueQuery}"`);
 
-    const result = await iterativeRag.query(vagueQuery);
+    const result = await iterativeQuery(model, retriever, vagueQuery);
 
-    console.log("\n--- Final Result ---");
+    console.log('\n--- Final Result ---');
     console.log(`Iterations: ${result.iterations}`);
     console.log(`Final Refined Query: "${result.finalQuery}"`);
     console.log(`Answer: ${result.answer}`);
 }
 
-class IterativeRAG {
-    private retriever: SemanticRetriever;
-    private maxIterations: number = 2; // Keep low for demo speed
-
-    constructor(retriever: SemanticRetriever) {
-        this.retriever = retriever;
-    }
-
-    async refineQuery(
-        originalQuery: string,
-        retrievedDocs: string[]
-    ): Promise<string> {
-        // Use LLM to refine query based on initial results
-        const refinementPrompt = `
-        Original query: ${originalQuery}
-        
-        Initial search returned these documents:
-        ${retrievedDocs.slice(0, 2).map(d => `- ${d}`).join('\n')}
-        
-        The documents might provide clues. Generate a refined,
-        more specific query to find more details.
-        
-        Refined query:
-        `;
-
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",  // Cheap model fine for query refinement
-            messages: [{ role: "user", content: refinementPrompt }],
-            temperature: 0.3,
-            max_completion_tokens: 100
-        });
-
-        return response.choices[0].message.content || originalQuery;
-    }
-
-    async query(question: string): Promise<{
-        answer: string;
-        iterations: number;
-        finalQuery: string;
-    }> {
-        let currentQuery = question;
-        const allDocs: string[] = [];
-
-        let iteration = 0;
-        for (iteration = 0; iteration < this.maxIterations; iteration++) {
-            console.log(`\n[Iteration ${iteration + 1}] Searching for: "${currentQuery}"`);
-
-            // Retrieve with current query
-            const results = await this.retriever.searchRanked(currentQuery, 3);
-            const docs = results.map(r => r.document);
-            allDocs.push(...docs);
-
-            // Check if we have good results (simple heuristic: score threshold)
-            // In a real app, you might check if the LLM thinks the context is sufficient.
-            // For now, we just iterate to demonstrate the pattern or stop if score is very high.
-            if (results.length > 0 && results[0].score > 0.88) {
-                console.log("  -> Found high confidence match, stopping.");
-                break;
-            }
-
-            // Refine query for next iteration if needed
-            if (iteration < this.maxIterations - 1) {
-                console.log("  -> Results insufficient, refining query...");
-                const refinedQuery = await this.refineQuery(question, docs);
-                currentQuery = refinedQuery.replace(/"/g, ''); // cleanup
-                console.log(`  -> Refined to: '${currentQuery}'`);
-            }
-        }
-
-        // Generate final answer from all retrieved docs
-        const uniqueDocs = Array.from(new Set(allDocs)).join("\n\n");
-        const answer = await this.generateAnswer(question, uniqueDocs);
-
-        return {
-            answer,
-            iterations: iteration + 1,
-            finalQuery: currentQuery
-        };
-    }
-
-    async generateAnswer(question: string, context: string): Promise<string> {
-        const response = await openai.chat.completions.create({
-            model: MODEL,
-            messages: [{
-                role: "user",
-                content: `Context:\n${context}\n\nQuestion: ${question}`
-            }]
-        });
-        return response.choices[0].message.content || "";
-    }
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    main().catch(console.error);
-}
+await main();

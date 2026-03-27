@@ -11,9 +11,19 @@ const models = {
     gemini: google(process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite'),
 };
 
+const embeddingModels = {
+    openai: openai.embedding(process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small'),
+    gemini: google.embedding(process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-001'),
+};
+
 export type Provider = keyof typeof models;
 
 export function createModel(provider?: Provider) {
     const selected = provider ?? (process.env.AI_PROVIDER as Provider) ?? 'openai';
     return models[selected];
+}
+
+export function createEmbeddingModel(provider?: Provider) {
+    const selected = provider ?? (process.env.AI_PROVIDER as Provider) ?? 'openai';
+    return embeddingModels[selected];
 }

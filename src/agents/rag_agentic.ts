@@ -1,64 +1,23 @@
 /**
- * Costs & Safety: Uses OpenAI API for query analysis and answer generation.
+ * Agentic RAG: LLM-Driven Retrieval
+ *
+ * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
  * Module reference: [Advanced RAG Patterns](https://aitutorial.dev/rag/advanced-rag-patterns#pattern-3-agentic-rag-llm-driven-retrieval)
  * Why: The LLM analyzes the user's question to decide how to search (filters, strategy, etc.) instead of just embedding the raw string.
  */
 
-import OpenAI from "openai";
-import { config } from 'dotenv';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
-import { SemanticRetriever } from './utils/semantic_retriever';
-
-// Load environment variables
-config({ path: join(process.cwd(), 'env', '.env') });
-
-const openai = new OpenAI();
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
+import { SemanticRetriever } from '../rag/utils/semantic_retriever';
 
 /**
- * Main function demonstrating Agentic RAG
+ * Use the LLM to analyze a query and determine the best retrieval strategy
  */
-async function main() {
-    console.log("--- Agentic RAG Example ---");
-
-    // 1. Setup Data with Metadata (Mocking what a real retrieval system would have)
-    // SemanticRetriever in this example is simple and doesn't support extensive metadata filtering 
-    // out of the box, but we will mock the logic to show the PATTERN.
-    const documents = [
-        "Policy: PTO is 20 days per year. (Type: HR, Year: 2024)",
-        "Update: Dental benefits added coverage for implants starting Jan 2025. (Type: HR, Year: 2025)",
-        "Engineering: Python is the primary language for data team. (Type: Tech, Team: Data)",
-        "Engineering: The platform team uses Go. (Type: Tech, Team: Platform)"
-    ];
-
-    console.log("Initializing Retriever...");
-    const retriever = await SemanticRetriever.create(documents);
-
-    const agentic = new AgenticRAG(retriever); // Pass docs to mock filtering
-
-    // Query 1: Temporal
-    console.log("\nQuery 1: 'What changed in benefits since last year?'");
-    await agentic.query("What changed in benefits since last year (2024)?");
-
-    // Query 2: Specific
-    console.log("\nQuery 2: 'Which engineers use Python?'");
-    await agentic.query("Which engineers use Python?");
-}
-
-class AgenticRAG {
-    private retriever: SemanticRetriever;
-
-    constructor(retriever: SemanticRetriever) {
-        this.retriever = retriever;
-    }
-
-    async analyzeQuery(question: string): Promise<any> {
-        // LLM analyzes query and decides retrieval strategy
-        const analysisPrompt = `
+async function analyzeQuery(model: ReturnType<typeof createModel>, question: string): Promise<any> {
+    const analysisPrompt = `
         Analyze this query and determine the best retrieval strategy:
         Query: ${question}
-        
+
         Respond in JSON:
         {
             "query_type": "factual | conceptual | multi_hop | temporal",
@@ -70,65 +29,96 @@ class AgenticRAG {
         }
         `;
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [{ role: "user", content: analysisPrompt }],
-            response_format: { type: "json_object" }
-        });
+    const { text } = await generateText({
+        model,
+        messages: [{ role: 'user', content: analysisPrompt }],
+    });
 
-        return JSON.parse(response.choices[0].message.content || "{}");
-    }
-
-    async query(question: string): Promise<string> {
-        // Step 1: Analyze query
-        const analysis = await this.analyzeQuery(question);
-        console.log(`  -> Analysis: ${analysis.reasoning}`);
-        console.log(`  -> Strategy: ${JSON.stringify(analysis)}`);
-
-        // Step 2: Construct optimized query
-        const searchQuery = analysis.key_entities ? analysis.key_entities.join(" ") : question;
-        console.log(`  -> Search Query: "${searchQuery}"`);
-
-        // Step 3: Retrieve 
-        // In a real system, you'd pass filters to the Vector DB.
-        // Here we'll search first, then manually filter for the demo.
-        let results = await this.retriever.searchRanked(searchQuery, 10);
-
-        // Mock filtering logic
-        if (analysis.time_range) {
-            console.log(`  -> Applying temporal filter: Year >= ${analysis.time_range}`);
-            results = results.filter(r => r.document.includes(String(analysis.time_range)));
-        }
-        if (analysis.metadata_filters) {
-            // Check if document contains the filter values (simple string match for demo)
-            for (const [key, val] of Object.entries(analysis.metadata_filters)) {
-                console.log(`  -> Applying metadata filter: ${key} = ${val}`);
-                // Simple hack for demo: check if value exists in text
-                results = results.filter(r => r.document.toLowerCase().includes(String(val).toLowerCase()));
-            }
-        }
-
-        // Step 4: Generate answer
-        const context = results.slice(0, 3).map(r => r.document).join("\n\n");
-        if (!context) {
-            console.log("  -> No matching documents found after filtering.");
-            return "No information found.";
-        }
-
-        const response = await openai.chat.completions.create({
-            model: MODEL,
-            messages: [{
-                role: "user",
-                content: `Context:\n${context}\n\nQuestion: ${question}`
-            }]
-        });
-
-        const answer = response.choices[0].message.content || "";
-        console.log(`  -> Answer: ${answer}`);
-        return answer;
-    }
+    return JSON.parse(text || '{}');
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    main().catch(console.error);
+/**
+ * Run the agentic RAG pipeline: analyze query, apply filters, retrieve, generate
+ */
+async function agenticQuery(
+    model: ReturnType<typeof createModel>,
+    retriever: SemanticRetriever,
+    question: string
+): Promise<string> {
+    // Step 1: Analyze query
+    const analysis = await analyzeQuery(model, question);
+    console.log(`  -> Analysis: ${analysis.reasoning}`);
+    console.log(`  -> Strategy: ${JSON.stringify(analysis)}`);
+
+    // Step 2: Construct optimized query
+    const searchQuery = analysis.key_entities ? analysis.key_entities.join(' ') : question;
+    console.log(`  -> Search Query: "${searchQuery}"`);
+
+    // Step 3: Retrieve
+    let results = await retriever.searchRanked(searchQuery, 10);
+
+    // Mock filtering logic
+    if (analysis.time_range) {
+        console.log(`  -> Applying temporal filter: Year >= ${analysis.time_range}`);
+        results = results.filter(r => r.document.includes(String(analysis.time_range)));
+    }
+    if (analysis.metadata_filters) {
+        for (const [key, val] of Object.entries(analysis.metadata_filters)) {
+            console.log(`  -> Applying metadata filter: ${key} = ${val}`);
+            results = results.filter(r => r.document.toLowerCase().includes(String(val).toLowerCase()));
+        }
+    }
+
+    // Step 4: Generate answer
+    const context = results.slice(0, 3).map(r => r.document).join('\n\n');
+    if (!context) {
+        console.log('  -> No matching documents found after filtering.');
+        return 'No information found.';
+    }
+
+    const { text } = await generateText({
+        model,
+        messages: [{
+            role: 'user',
+            content: `Context:\n${context}\n\nQuestion: ${question}`,
+        }],
+    });
+
+    console.log(`  -> Answer: ${text}`);
+    return text;
 }
+
+/**
+ * Main function demonstrating Agentic RAG
+ *
+ * This example shows how the LLM analyzes the user's question to decide
+ * retrieval strategy, filters, and search approach instead of embedding the raw string.
+ *
+ * The agentic approach enables more intelligent retrieval by understanding query intent.
+ */
+async function main(): Promise<void> {
+    const model = createModel();
+
+    console.log('--- Agentic RAG Example ---');
+
+    // Step 1: Setup Data with Metadata
+    const documents = [
+        'Policy: PTO is 20 days per year. (Type: HR, Year: 2024)',
+        'Update: Dental benefits added coverage for implants starting Jan 2025. (Type: HR, Year: 2025)',
+        'Engineering: Python is the primary language for data team. (Type: Tech, Team: Data)',
+        'Engineering: The platform team uses Go. (Type: Tech, Team: Platform)',
+    ];
+
+    console.log('Initializing Retriever...');
+    const retriever = await SemanticRetriever.create(documents);
+
+    // Step 2: Query 1 — Temporal
+    console.log('\nQuery 1: "What changed in benefits since last year?"');
+    await agenticQuery(model, retriever, 'What changed in benefits since last year (2024)?');
+
+    // Step 3: Query 2 — Specific
+    console.log('\nQuery 2: "Which engineers use Python?"');
+    await agenticQuery(model, retriever, 'Which engineers use Python?');
+}
+
+await main();

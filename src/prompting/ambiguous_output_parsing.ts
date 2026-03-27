@@ -2,7 +2,7 @@
  * Ambiguous Output Parsing Problem and Solution
  *
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: [Pattern 3: Ambiguous Output Parsing](https://aitutorial.dev/prompt-optimization-testing#pattern-3-ambiguous-output-parsing)
+ * Module reference: [Ambiguous Output Parsing](https://aitutorial.dev/prompting/prompt-security#ambiguous-output-parsing)
  * Why: Demonstrates how ambiguous prompts lead to unpredictable output formats and how specifying output structure ensures consistent, parseable responses.
  */
 

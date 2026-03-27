@@ -1,61 +1,37 @@
 /**
- * Costs & Safety: Uses OpenAI API via LangChain for agent execution. Each query may involve multiple LLM calls.
+ * Costs & Safety: Uses LLM API via LangChain for agent execution. Each query may involve multiple LLM calls.
+ * Env: AI_PROVIDER (openai|gemini), OPENAI_API_KEY, OPENAI_MODEL, GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_MODEL
  * Module reference: [Introduction to AI Agents](https://aitutorial.dev/agents/intro#your-first-agent-simple-tool-use)
- * Why: Demonstrates the fundamental agent loop using LangChain - how an LLM can decide to use tools, execute them, and incorporate results into its response.
+ * Why: Demonstrates a proper ReAct agent using LangGraph — the agent autonomously decides when to call tools, handles multi-step reasoning, and loops until it has a final answer.
  */
 
-import { ChatOpenAI } from "@langchain/openai";
-import { tool } from "@langchain/core/tools";
+import { createAgent, tool } from "langchain";
 import { z } from "zod";
-import { config } from 'dotenv';
-import { join } from 'path';
 import { fileURLToPath } from 'url';
-
-// Load environment variables
-config({ path: join(process.cwd(), 'env', '.env') });
+import { createModel } from './langchain_utils.js';
 
 /**
- * Main function demonstrating a simple weather agent using LangChain
- * 
- * This example shows the basic agent loop:
- * 1. User asks a question
- * 2. Agent decides it needs a tool
- * 3. Tool is executed
- * 4. Agent uses the result to answer
+ * Demonstrates a ReAct agent that autonomously reasons and uses tools
+ *
+ * This example shows a proper agent loop powered by LangGraph's createReactAgent:
+ * the LLM decides whether to call a tool, observes the result, and keeps
+ * reasoning until it can produce a final answer — no manual orchestration needed.
+ *
+ * Unlike manual tool-calling, this handles multi-step reasoning and multiple
+ * tool calls automatically.
  */
-async function main() {
-    console.log("--- Simple Weather Agent (LangChain) ---");
+async function main(): Promise<void> {
+    console.log("--- Weather Agent (LangGraph ReAct) ---");
 
-    const userQuery = "What's the weather in San Francisco?";
-    console.log(`User: ${userQuery}`);
-    console.log('');
-
-    const response = await runWeatherAgent(userQuery);
-
-    console.log('');
-    console.log(`Agent: ${response}`);
-}
-
-/**
- * Run the weather agent with tool calling
- */
-async function runWeatherAgent(userQuery: string): Promise<string> {
-    // Step 1: Initialize the LLM with tool calling support
-    const model = new ChatOpenAI({
-        openAIApiKey: process.env.OPENAI_API_KEY!,
-        modelName: process.env.OPENAI_MODEL!,
-    });
-
-    // Step 2: Define the weather tool
+    // Step 1: Define the weather tool
     const weatherTool = tool(
         async ({ city, units }: { city: string; units?: string }) => {
             console.log(`  -> Tool called: get_weather(city="${city}", units="${units || 'celsius'}")`);
 
             // In production, call a real weather API
-            // For demo, return fake data
             const weatherData = {
-                city: city,
-                temperature: 72,
+                city,
+                temperature: 22,
                 condition: "Sunny",
                 humidity: 45,
                 units: units || 'celsius'
@@ -65,40 +41,31 @@ async function runWeatherAgent(userQuery: string): Promise<string> {
         },
         {
             name: "get_weather",
-            description: "Get current weather conditions for a specific location. Use this when users ask about weather, temperature, or atmospheric conditions.",
+            description: "Get current weather conditions for a specific location.",
             schema: z.object({
-                city: z.string().describe("City name or location to get weather for (e.g., 'San Francisco', 'London, UK', 'Tokyo')"),
-                units: z.enum(["celsius", "fahrenheit", "kelvin"]).optional().describe("Temperature units to use. Valid values: 'celsius', 'fahrenheit', 'kelvin'. Defaults to 'celsius'."),
+                city: z.string().describe("City name (e.g., 'Buenos Aires', 'San Francisco', 'Tokyo')"),
+                units: z.enum(["celsius", "fahrenheit", "kelvin"]).optional().describe("Temperature units. Defaults to 'celsius'."),
             }),
         }
     );
 
-    // Step 3: Bind the tool to the model
-    const modelWithTools = model.bindTools([weatherTool]);
+    // Step 2: Create the ReAct agent
+    const model = await createModel();
+    const agent = createAgent({ model, tools: [weatherTool] });
 
-    // Step 4: Invoke the model
-    const response = await modelWithTools.invoke(userQuery);
+    // Step 3: Run the agent
+    const userQuery = "What's the weather in Buenos Aires?";
+    console.log(`User: ${userQuery}`);
+    console.log('');
 
-    // Step 5: Check if the model wants to use a tool
-    if (response.tool_calls && response.tool_calls.length > 0) {
-        console.log("  -> Agent decided to use a tool");
+    const result = await agent.invoke({
+        messages: [{ role: "user", content: userQuery }],
+    });
 
-        // Execute the tool
-        const toolCall = response.tool_calls[0];
-        const toolResult = await weatherTool.invoke(toolCall);
-
-        // Step 6: Send the tool result back to the model
-        const finalResponse = await model.invoke([
-            { role: "user", content: userQuery },
-            { role: "assistant", content: response.content, tool_calls: response.tool_calls },
-            { role: "tool", content: toolResult.content, tool_call_id: toolCall.id }
-        ]);
-
-        return finalResponse.content as string;
-    }
-
-    // No tool needed, return direct response
-    return response.content as string;
+    // Step 4: Extract the final response
+    const lastMessage = result.messages[result.messages.length - 1];
+    console.log('');
+    console.log(`Agent: ${lastMessage.content}`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

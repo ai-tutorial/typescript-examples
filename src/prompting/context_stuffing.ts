@@ -2,7 +2,7 @@
  * Context Stuffing Attack and Defense
  *
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: [Pattern 2: Context Stuffing](https://aitutorial.dev/prompt-optimization-testing#pattern-2-context-stuffing)
+ * Module reference: [Context Stuffing](https://aitutorial.dev/prompting/prompt-security#context-stuffing)
  * Why: Demonstrates how users can attempt to inject fake context to manipulate model behavior and how to defend against it using verified data and XML structure.
  */
 

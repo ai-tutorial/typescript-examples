@@ -1,5 +1,5 @@
-import { VectorStoreIndex, TextNode, Settings, MetadataMode } from 'llamaindex';
-import { OpenAIEmbedding } from '@llamaindex/openai';
+import { embed, embedMany } from 'ai';
+import { createEmbeddingModel } from '../utils.js';
 
 export type RankedSemanticResult = {
     document: string;
@@ -9,40 +9,31 @@ export type RankedSemanticResult = {
 };
 
 /**
- * Utility helper for semantic (vector) search using LlamaIndex.
- * Encapsulates index creation and retrieval logic.
- * 
+ * In-memory semantic (vector) search using the Vercel AI SDK.
+ * Supports OpenAI and Gemini embeddings via createEmbeddingModel().
+ *
  * NOTE: This is an in-memory abstraction designed for educational examples.
- * In a production environment, you should swap this for a persistent Vector Store 
- * like Pinecone, Milvus, Weaviate, Qdrant, or ChromaDB to ensure scalability 
- * and data persistence.
+ * In production, swap this for a persistent vector store like Pinecone,
+ * Milvus, Weaviate, Qdrant, or ChromaDB.
  */
 export class SemanticRetriever {
-    private index: VectorStoreIndex;
+    private documents: string[];
+    private embeddings: number[][];
     private defaultTopK: number;
 
-    private constructor(index: VectorStoreIndex, defaultTopK: number) {
-        this.index = index;
+    private constructor(documents: string[], embeddings: number[][], defaultTopK: number) {
+        this.documents = documents;
+        this.embeddings = embeddings;
         this.defaultTopK = defaultTopK;
     }
 
     /**
-     * Creates a new SemanticRetriever from a set of documents.
+     * Creates a new SemanticRetriever by embedding all documents.
      */
     static async create(documents: string[], defaultTopK = 5): Promise<SemanticRetriever> {
-        // Configure default embedding model for LlamaIndex
-        Settings.embedModel = new OpenAIEmbedding({
-            model: 'text-embedding-3-small',
-        });
-
-        const nodes = documents.map((text, idx) => new TextNode({
-            text,
-            id_: `doc-vec-${idx}`,
-            metadata: { docIdx: idx }
-        }));
-
-        const index = await VectorStoreIndex.init({ nodes });
-        return new SemanticRetriever(index, defaultTopK);
+        const model = createEmbeddingModel();
+        const { embeddings } = await embedMany({ model, values: documents });
+        return new SemanticRetriever(documents, embeddings, defaultTopK);
     }
 
     /**
@@ -50,20 +41,22 @@ export class SemanticRetriever {
      */
     async searchRanked(query: string, topK?: number): Promise<RankedSemanticResult[]> {
         const limit = topK ?? this.defaultTopK;
-        const retriever = this.index.asRetriever({ similarityTopK: limit });
-        const results = await retriever.retrieve({ query });
+        const model = createEmbeddingModel();
+        const { embedding: queryEmbedding } = await embed({ model, value: query });
 
-        return results.map((result, index) => {
-            const node = result.node as TextNode;
-            const docIdx = node.metadata.docIdx ?? Number.parseInt(node.id_.replace('doc-vec-', ''), 10);
+        const scored = this.embeddings.map((docEmbedding, idx) => ({
+            docIdx: idx,
+            score: cosineSimilarity(queryEmbedding, docEmbedding),
+        }));
 
-            return {
-                document: node.getContent(MetadataMode.NONE),
-                score: result.score ?? 0,
-                rank: index + 1,
-                docIdx
-            };
-        });
+        scored.sort((a, b) => b.score - a.score);
+
+        return scored.slice(0, limit).map((item, rank) => ({
+            document: this.documents[item.docIdx],
+            score: item.score,
+            rank: rank + 1,
+            docIdx: item.docIdx,
+        }));
     }
 
     /**
@@ -73,4 +66,16 @@ export class SemanticRetriever {
         const ranked = await this.searchRanked(query, topK);
         return ranked.map(r => r.docIdx);
     }
+}
+
+function cosineSimilarity(a: number[], b: number[]): number {
+    let dot = 0;
+    let magA = 0;
+    let magB = 0;
+    for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i];
+        magA += a[i] * a[i];
+        magB += b[i] * b[i];
+    }
+    return dot / (Math.sqrt(magA) * Math.sqrt(magB));
 }

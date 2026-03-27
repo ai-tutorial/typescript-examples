@@ -7,8 +7,7 @@
  */
 
 import { generateText } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import './utils.js'; // loads env
+import { createModel } from './utils.js';
 
 type ClassificationResult = {
     sentiment: string;
@@ -43,11 +42,11 @@ function parseResponse(response: string): { sentiment: string; confidence: numbe
  * Cascaded classification: try cheap model first, escalate if uncertain
  */
 async function cascadedClassification(
+    cheapModel: ReturnType<typeof createModel>,
+    expensiveModel: ReturnType<typeof createModel>,
     message: string,
     confidenceThreshold: number = 0.85
 ): Promise<void> {
-    const cheapModel = openai('gpt-4o-mini');
-    const expensiveModel = openai('gpt-4o');
 
     // Step 1: Try cheap model first
     const { text: cheapText } = await generateText({
@@ -66,7 +65,7 @@ async function cascadedClassification(
 
     // Step 2: Check confidence — if high enough, use cheap result
     if (parsed.confidence >= confidenceThreshold) {
-        result = { sentiment: parsed.sentiment, model: 'gpt-4o-mini', cost: 0.0005 };
+        result = { sentiment: parsed.sentiment, model: 'cheap', cost: 0.0005 };
     } else {
         // Step 3: Escalate to expensive model
         const { text: expensiveText } = await generateText({
@@ -81,7 +80,7 @@ async function cascadedClassification(
             ],
         });
 
-        result = { sentiment: extractSentiment(expensiveText), model: 'gpt-4o', cost: 0.01 };
+        result = { sentiment: extractSentiment(expensiveText), model: 'expensive', cost: 0.01 };
     }
 
     console.log(`Message: ${message}`);
@@ -99,14 +98,17 @@ async function cascadedClassification(
  * signals are reliable.
  */
 async function main(): Promise<void> {
+    const cheapModel = createModel();
+    const expensiveModel = createModel();
+
     // Step 1: Test with high confidence message
-    await cascadedClassification("I love this product! It's amazing!");
+    await cascadedClassification(cheapModel, expensiveModel, "I love this product! It's amazing!");
 
     // Step 2: Test with ambiguous message (likely to escalate)
-    await cascadedClassification("It's okay, I guess. Nothing special.");
+    await cascadedClassification(cheapModel, expensiveModel, "It's okay, I guess. Nothing special.");
 
     // Step 3: Test with negative message
-    await cascadedClassification("This is terrible. Complete waste of money.");
+    await cascadedClassification(cheapModel, expensiveModel, "This is terrible. Complete waste of money.");
 
     console.log('Note: 70% of requests handled by cheap model, 30% escalated.');
     console.log('Average cost savings: ~64% compared to using expensive model for all requests.');

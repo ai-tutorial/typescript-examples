@@ -26,7 +26,7 @@ const mcp = new McpServer({
 
 // Define schema for weather tool
 const weatherSchema = {
-    location: z.string().describe('City name or location to get weather for (e.g., \'San Francisco\', \'London, UK\', \'Tokyo\')'),
+    location: z.string().describe('City name or location to get weather for (e.g., \'Buenos Aires\', \'San Francisco\', \'London, UK\', \'Tokyo\')'),
     units: z.enum(['celsius', 'fahrenheit', 'kelvin']).optional().describe('Temperature units to use. Valid values: \'celsius\', \'fahrenheit\', \'kelvin\'. Defaults to \'celsius\'.'),
 };
 

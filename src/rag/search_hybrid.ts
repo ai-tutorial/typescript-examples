@@ -1,30 +1,26 @@
 /**
- * Costs & Safety: Real OpenAI API calls; keep inputs small. Requires OPENAI_API_KEY.
+ * Hybrid Search: Best of Both Worlds
+ *
+ * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
  * Module reference: [Hybrid Search: Best of Both Worlds](https://aitutorial.dev/rag/search-strategy-selection#hybrid-search-best-of-both-worlds)
  * Why: Hybrid search combines the precision of lexical (keyword) search with the conceptual recall of semantic (vector) search, providing the most robust retrieval for production RAG systems.
  */
 
-import { fileURLToPath } from 'url';
-import { join } from 'path';
-import { config } from 'dotenv';
+import { generateText } from 'ai';
+import { createModel } from './utils.js';
 import { LexicalRetriever } from './utils/lexical_retriever';
 import { SemanticRetriever } from './utils/semantic_retriever';
-import OpenAI from 'openai';
-
-// Load environment variables
-config({ path: join(process.cwd(), 'env', '.env') });
-
-const openai = new OpenAI();
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o';
 
 /**
  * Main function that demonstrates hybrid search strategy
- * 
+ *
  * This example shows how to combine lexical (keyword) and semantic (vector) retrieval using Reciprocal Rank Fusion (RRF).
- * 
+ *
  * By merging different search signals, hybrid retrieval significantly improves overall accuracy and robustness.
  */
 async function main(): Promise<void> {
+    const model = createModel();
+
     const essayText = `
         What I Worked On
         February 2021
@@ -33,63 +29,61 @@ async function main(): Promise<void> {
     `.trim();
 
     // Step 1: Prepare Data
-    const documents = essayText.split(`\n`).filter(line => line.trim().length > 0);
+    const documents = essayText.split('\n').filter(line => line.trim().length > 0);
     console.log(`Loaded ${documents.length} chunks.`);
 
     // Step 2: Initialize Retrievers
-    console.log(`Initializing Lexical and Semantic Retrievers...`);
+    console.log('Initializing Lexical and Semantic Retrievers...');
     const lexical = await LexicalRetriever.create(documents, 5);
     const semantic = await SemanticRetriever.create(documents);
 
     // Step 3: Search Query
-    const query = `What kind of writing did he do before college?`;
+    const query = 'What kind of writing did he do before college?';
     console.log('');
     console.log(`Query: "${query}"`);
 
     // Step 4: Run Individual Searches
-    console.log(`Running Lexical Search (BM25)...`);
+    console.log('Running Lexical Search (BM25)...');
     const bm25Results = await lexical.searchRanked(query, 5);
 
-    console.log(`Running Semantic Search (vector)...`);
+    console.log('Running Semantic Search (vector)...');
     const semanticResults = await semantic.searchRanked(query, 5);
 
     // Step 5: Apply Reciprocal Rank Fusion
-    console.log(`Applying RRF Fusion...`);
+    console.log('Applying RRF Fusion...');
     const fusedResults = rrfFuse(bm25Results, semanticResults);
 
     console.log('');
-    console.log(`Top Hybrid Results:`);
+    console.log('Top Hybrid Results:');
     fusedResults.slice(0, 3).forEach((r, i) => {
         console.log(`[Rank ${i + 1}] Score: ${r.score.toFixed(4)} - "${r.document.slice(0, 80)}..."`);
     });
 
-    // Step 6: RAG - Generate Answer using Retrieved Context
+    // Step 6: RAG — Generate Answer using Retrieved Context
     console.log('');
-    console.log('Generating answer with OpenAI...');
+    console.log('Generating answer...');
     const context = fusedResults.slice(0, 3).map(r => r.document).join('\n\n');
 
-    const response = await openai.chat.completions.create({
-        model: MODEL,
+    const { text } = await generateText({
+        model,
         messages: [
             {
                 role: 'system',
-                content: 'Answer based only on the provided context. If the context doesn\'t contain the answer, say so.'
+                content: 'Answer based only on the provided context. If the context doesn\'t contain the answer, say so.',
             },
             {
                 role: 'user',
-                content: `Context:\n${context}\n\nQuestion: ${query}`
-            }
-        ]
+                content: `Context:\n${context}\n\nQuestion: ${query}`,
+            },
+        ],
     });
 
     console.log('');
     console.log('Answer:');
-    console.log(response.choices[0].message.content);
+    console.log(`${text}`);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    main().catch(console.error);
-}
+await main();
 
 /**
  * Reciprocal Rank Fusion helper function.

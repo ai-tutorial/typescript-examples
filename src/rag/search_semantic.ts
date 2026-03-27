@@ -10,7 +10,7 @@ import { config } from 'dotenv';
 import { SemanticRetriever } from './utils/semantic_retriever';
 
 // Load environment variables
-config({ path: join(process.cwd(), 'env', '.env') });
+config({ path: join(process.cwd(), 'env', '.env'), quiet: true });
 
 /**
  * Main function that demonstrates semantic (vector) search strategy

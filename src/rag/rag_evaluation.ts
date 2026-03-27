@@ -1,139 +1,189 @@
-
 /**
- * RAG Evaluation Example
- * 
- * Costs & Safety:
- * - Uses OpenAI GPT-4o (or similar) for evaluation and generation.
- * - Costs apply for embeddings and LLM calls.
- * - Ensure OPENAI_API_KEY is set in .env
- * 
- * Module: RAG > RAG Evaluation (Lesson 2.6)
- * Reference: https://aitutorial.dev
- * 
- * Why:
- * Demonstrates how to evaluate RAG systems using:
- * 1. Retrieval Metrics (Hit Rate, MRR) - Did we find the right chunks?
- * 2. Generation Metrics (Faithfulness, Relevancy) - Did the LLM answer correctly?
+ * RAG Evaluation
+ *
+ * Costs & Safety: Uses LLM API calls for generation and evaluation. Costs apply per call.
+ * Module reference: [Evaluation & Quality Metrics](https://aitutorial.dev/rag/rag-evaluation)
+ * Why: Demonstrates how to evaluate RAG systems using retrieval metrics (Hit Rate, MRR) and generation metrics (Faithfulness, Relevancy via LLM-as-Judge).
  */
 
-import {
-    VectorStoreIndex,
-    Settings,
-    MetadataMode,
-    Document
-} from "llamaindex";
-import { OpenAI, OpenAIEmbedding } from "@llamaindex/openai";
-import {
-    FaithfulnessEvaluator,
-    RelevancyEvaluator
-} from "llamaindex";
+import { generateText } from "ai";
+import { createModel } from "./utils.js";
+import { SemanticRetriever } from "./utils/semantic_retriever.js";
+import { readFileSync } from "fs";
+import { join } from "path";
+import { fileURLToPath } from "url";
 
-import * as dotenv from "dotenv";
-import * as path from "path";
-import * as fs from "fs";
+/**
+ * Evaluates a RAG system on both retrieval and generation quality
+ *
+ * This example shows how to measure retrieval metrics (Hit Rate, MRR) to check
+ * if we find the right documents, then uses LLM-as-Judge to evaluate generation
+ * quality (Faithfulness, Relevancy) without needing human labels.
+ *
+ * Separating retrieval and generation evaluation lets you pinpoint whether
+ * failures come from bad retrieval or bad generation — the most important
+ * diagnostic distinction in any RAG system.
+ */
+async function main(): Promise<void> {
+    const model = createModel();
 
-
-dotenv.config({ path: path.resolve(process.cwd(), "env/.env"), override: true });
-
-export async function main() {
+    // Step 1: Load corpus and build retriever
     console.log("Initializing RAG Evaluation...");
+    const filePath = join(process.cwd(), "assets/paul_graham_essay.txt");
+    const text = readFileSync(filePath, "utf-8");
 
+    // Split into chunks for retrieval
+    const chunks = text.split("\n\n").filter(c => c.trim().length > 50);
+    const retriever = await SemanticRetriever.create(chunks, 3);
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    console.log("Loaded API Key:", apiKey ? apiKey.substring(0, 10) + "..." : "undefined");
-
-    // Setup LLM
-    const model = process.env.OPENAI_MODEL || "gpt-4o";
-    Settings.llm = new OpenAI({
-        model: model,
-        apiKey: apiKey,
-        temperature: 1
-    });
-    Settings.embedModel = new OpenAIEmbedding({
-        apiKey: apiKey
-    });
-
-    // --- 1. Data Setup (Retrieval) ---
-    // Load data from file using fs for robust referencing, then create Document
-    const filePath = path.join(process.cwd(), "assets/paul_graham_essay.txt");
-    const text = fs.readFileSync(filePath, "utf-8");
-    const documents = [new Document({ text: text, id_: "doc_1" })];
-
-    // Create Index
-    const index = await VectorStoreIndex.fromDocuments(documents);
-    const retriever = index.asRetriever({ similarityTopK: 3 });
-
-    // Define Queries and Ground Truth
+    // Step 2: Define queries with ground truth
     const queries = [
         {
             query: "Why did the author switch from philosophy to AI?",
-            expectedIds: ["doc_1"],
+            expectedChunkKeywords: ["philosophy", "AI"],
         },
         {
-            query: "What was the first computer the author owned?",
-            expectedIds: ["doc_1"],
+            query: "What was the first computer the author used?",
+            expectedChunkKeywords: ["IBM", "1401"],
         }
     ];
 
-    console.log("\n--- Part 1: Retrieval Evaluation ---");
+    // Step 3: Evaluate retrieval (Hit Rate, MRR)
+    console.log("--- Part 1: Retrieval Evaluation ---");
 
     for (const item of queries) {
-        const nodes = await retriever.retrieve(item.query);
-        console.log(`\nQuery: "${item.query}"`);
-        console.log(`Retrieved ${nodes.length} nodes.`);
+        const results = await retriever.searchRanked(item.query, 3);
+        console.log(`Query: "${item.query}"`);
+        console.log(`Retrieved ${results.length} chunks.`);
 
-        const hit = nodes.some(node => item.expectedIds.includes(node.node.id_));
-        console.log(`Hit Rate (1=Yes, 0=No): ${hit ? 1 : 0}`);
+        // Hit Rate: did any retrieved chunk contain expected keywords?
+        const hit = results.some(r =>
+            item.expectedChunkKeywords.some(kw => r.document.toLowerCase().includes(kw.toLowerCase()))
+        );
+        console.log(`Hit Rate: ${hit ? 1 : 0}`);
 
+        // MRR: reciprocal rank of first relevant result
         let mrr = 0;
-        nodes.forEach((node, idx) => {
-            if (item.expectedIds.includes(node.node.id_) && mrr === 0) {
-                mrr = 1 / (idx + 1);
+        for (let i = 0; i < results.length; i++) {
+            const isRelevant = item.expectedChunkKeywords.some(kw =>
+                results[i].document.toLowerCase().includes(kw.toLowerCase())
+            );
+            if (isRelevant) {
+                mrr = 1 / (i + 1);
+                break;
             }
-        });
+        }
         console.log(`MRR: ${mrr.toFixed(2)}`);
+        console.log('');
     }
 
-    // --- 2. Generation Evaluation (LLM-as-Judge) ---
-    console.log("\n--- Part 2: Generation Evaluation (LLM-as-Judge) ---");
-
-    const faithfulnessEvaluator = new FaithfulnessEvaluator({});
-    const relevancyEvaluator = new RelevancyEvaluator({});
-
-    const queryEngine = index.asQueryEngine();
+    // Step 4: Evaluate generation (LLM-as-Judge)
+    console.log("--- Part 2: Generation Evaluation (LLM-as-Judge) ---");
 
     for (const item of queries) {
-        const response = await queryEngine.query({ query: item.query });
-        const responseText = response.toString();
-        const sourceNodes = response.sourceNodes;
+        const results = await retriever.searchRanked(item.query, 3);
+        const contexts = results.map(r => r.document);
 
-        const contexts = sourceNodes?.map(n => n.node.getContent(MetadataMode.NONE)) || [];
+        // Generate answer using retrieved context
+        const { text: answer } = await generateText({
+            model,
+            prompt: `Answer the question based ONLY on the provided context.
 
-        console.log(`\nQuery: "${item.query}"`);
-        console.log(`Generated Answer: "${responseText}"`);
+Context:
+${contexts.join("\n---\n")}
 
-        const faithfulnessResult = await faithfulnessEvaluator.evaluate({
-            query: item.query,
-            response: responseText,
-            contexts: contexts
+Question: ${item.query}
+
+Answer:`,
         });
 
-        console.log(`Faithfulness Score: ${faithfulnessResult.score}`);
-        console.log(`Faithfulness Passing: ${faithfulnessResult.passing}`);
-        if (faithfulnessResult.feedback) console.log(`Feedback: ${faithfulnessResult.feedback}`);
+        console.log(`Query: "${item.query}"`);
+        console.log(`Answer: "${answer.slice(0, 150)}..."`);
 
-        const relevancyResult = await relevancyEvaluator.evaluate({
+        // Faithfulness: is the answer grounded in context?
+        const faithfulness = await evaluateWithJudge(model, {
+            criterion: "faithfulness",
             query: item.query,
-            response: responseText,
-            contexts: contexts
+            answer,
+            contexts,
         });
+        console.log(`Faithfulness: ${faithfulness.passing ? "PASS" : "FAIL"} (${faithfulness.score.toFixed(2)})`);
 
-        console.log(`Relevancy Score: ${relevancyResult.score}`);
-        console.log(`Relevancy Passing: ${relevancyResult.passing}`);
-        if (relevancyResult.feedback) console.log(`Feedback: ${relevancyResult.feedback}`);
+        // Relevancy: does the answer address the query?
+        const relevancy = await evaluateWithJudge(model, {
+            criterion: "relevancy",
+            query: item.query,
+            answer,
+            contexts,
+        });
+        console.log(`Relevancy: ${relevancy.passing ? "PASS" : "FAIL"} (${relevancy.score.toFixed(2)})`);
+        console.log('');
     }
 
-    console.log("\nEvaluation Complete.");
+    console.log("Evaluation Complete.");
 }
 
-await main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main().catch(console.error);
+}
+
+interface JudgeInput {
+    criterion: "faithfulness" | "relevancy";
+    query: string;
+    answer: string;
+    contexts: string[];
+}
+
+interface JudgeResult {
+    passing: boolean;
+    score: number;
+    feedback: string;
+}
+
+async function evaluateWithJudge(
+    model: ReturnType<typeof createModel>,
+    input: JudgeInput
+): Promise<JudgeResult> {
+    const contextBlock = input.contexts.join("\n---\n");
+
+    const prompts: Record<string, string> = {
+        faithfulness: `You are an impartial judge evaluating whether an answer is faithful to the provided context.
+
+Context:
+${contextBlock}
+
+Question: ${input.query}
+Answer: ${input.answer}
+
+Is the answer fully supported by the context? Does it contain any claims not present in the context?
+
+Respond with a JSON object: {"score": <0.0-1.0>, "passing": <true/false>, "feedback": "<brief explanation>"}
+Score 1.0 = fully faithful, 0.0 = completely hallucinated. Passing threshold: 0.8.`,
+
+        relevancy: `You are an impartial judge evaluating whether an answer is relevant to the question asked.
+
+Question: ${input.query}
+Answer: ${input.answer}
+
+Does the answer directly address the question? Is it on-topic and helpful?
+
+Respond with a JSON object: {"score": <0.0-1.0>, "passing": <true/false>, "feedback": "<brief explanation>"}
+Score 1.0 = perfectly relevant, 0.0 = completely off-topic. Passing threshold: 0.8.`,
+    };
+
+    const { text: response } = await generateText({
+        model,
+        prompt: prompts[input.criterion],
+    });
+
+    try {
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+    } catch {
+        // Fall through to default
+    }
+
+    return { passing: false, score: 0, feedback: "Could not parse judge response" };
+}

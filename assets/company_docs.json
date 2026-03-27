@@ -1,0 +1,27 @@
+[
+  {
+    "id": "fin-q4-2024",
+    "type": "financial_report",
+    "content": "MySecretCompany Q4 2024 Financial Report: Revenue was $2.3B, up 15% year-over-year. Operating margin improved to 22%. Net income was $450M."
+  },
+  {
+    "id": "fin-q3-2024",
+    "type": "financial_report",
+    "content": "MySecretCompany Q3 2024 Financial Report: Revenue was $1.9B. The company launched MindFlow Pro, which drove 30% of new enterprise deals."
+  },
+  {
+    "id": "eng-blog-2025-01",
+    "type": "engineering_blog",
+    "content": "MySecretCompany Engineering Blog - January 2025: We migrated our infrastructure to Kubernetes, reducing deployment times by 60%."
+  },
+  {
+    "id": "hr-policy",
+    "type": "hr_policy",
+    "content": "MySecretCompany HR Policy: PTO is 25 days per year. Remote work is allowed 3 days per week. Health insurance covers dental and vision."
+  },
+  {
+    "id": "roadmap-2025",
+    "type": "product_roadmap",
+    "content": "MySecretCompany Product Roadmap 2025: AI-powered mind mapping features planned for Q2. Mobile app redesign scheduled for Q3."
+  }
+]

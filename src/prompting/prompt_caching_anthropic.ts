@@ -11,7 +11,7 @@ import { config } from 'dotenv';
 import { join } from 'path';
 
 // Load environment variables from env/.env file
-config({ path: join(process.cwd(), 'env', '.env') });
+config({ path: join(process.cwd(), 'env', '.env'), quiet: true });
 
 // Create an Anthropic client instance
 const client = new Anthropic({

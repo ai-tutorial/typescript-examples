@@ -3,15 +3,19 @@
     "version": "1.0.0",
     "type": "module",
     "description": "RAG (Retrieval-Augmented Generation) examples for AI Tutorial",
+    "scripts": {
+        "test:rag": "ROOT=$(cd ../.. && pwd) && for f in basic_rag.ts rag_semantic.ts search_lexical.ts search_inverted_index.ts search_semantic.ts search_hybrid.ts cross_encoder_reranking.ts rag_iterative.ts rag_graph.ts rag_hybrid_data.ts pdf_needle_search.ts pdf_hierarchical_summary.ts; do echo \"\\n=== Running $f ===\"; (cd \"$ROOT\" && npx tsx \"src/rag/$f\") || exit 1; done"
+    },
     "dependencies": {
+        "@ai-sdk/google": "^3.0.43",
+        "@ai-sdk/openai": "^3.0.41",
+        "ai": "^6.0.116",
         "alasql": "^4.15.0",
         "canvas": "^3.2.0",
         "dotenv": "^17.2.3",
         "jimp": "^1.6.0",
-        "llamaindex": "^0.12.1",
         "node-html-parser": "^7.0.1",
         "okapibm25": "^1.4.1",
-        "openai": "^6.9.1",
         "pdf-lib": "^1.17.1",
         "pdf-parse": "^1.1.1",
         "pdf-poppler": "^0.2.3",

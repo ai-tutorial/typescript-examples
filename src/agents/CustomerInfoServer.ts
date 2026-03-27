@@ -1,3 +1,9 @@
+/**
+ * Costs & Safety: No external API calls. Mock data.
+ * Module reference: [Model Context Protocol](https://aitutorial.dev/agents/model-context-protocol)
+ * Why: MCP server for customer account, orders, and preferences.
+ */
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from 'express';
@@ -6,18 +12,8 @@ import { z } from 'zod';
 /**
  * Customer Info MCP Server
  *
- * Exposes tools for customer account management:
- * - get_customer_info: account lookup (user identified by header)
- * - check_order_status: order tracking and delivery info
- * - get_purchase_history: recent purchases
- * - update_customer_preferences: communication preferences
- *
- * The user_uuid is extracted from the `x-user-uuid` HTTP header
- * (set by the agent) — the LLM never needs to pass it as a parameter.
- * Tools that need the customer's identity read it from the request context.
- *
- * In production, this would use OAuth 2.0 Bearer tokens via
- * the MCP auth provider for proper authentication.
+ * Tools: get_customer_info, check_order_status, get_purchase_history, update_customer_preferences.
+ * User identified via x-user-uuid header — tools read identity from request context.
  */
 export class CustomerInfoServer {
     private app = express();
@@ -28,17 +24,17 @@ export class CustomerInfoServer {
     private currentUserUuid: string = 'unknown';
 
     private customers: Record<string, any> = {
-        'alice': { user_uuid: 'alice', name: 'Alice Johnson', email: 'alice@example.com', status: 'active', orders: 15, vip: true, member_since: '2022-03-15' },
-        'bob': { user_uuid: 'bob', name: 'Bob Smith', email: 'bob@example.com', status: 'active', orders: 3, vip: false, member_since: '2024-01-10' },
+        'usr-a1b2c3d4': { user_uuid: 'usr-a1b2c3d4', name: 'Alice Johnson', email: 'alice@example.com', status: 'active', orders: 15, vip: true, member_since: '2022-03-15' },
+        'usr-e5f6g7h8': { user_uuid: 'usr-e5f6g7h8', name: 'Bob Smith', email: 'bob@example.com', status: 'active', orders: 3, vip: false, member_since: '2024-01-10' },
     };
 
     private ordersByUser: Record<string, any[]> = {
-        'alice': [
+        'usr-a1b2c3d4': [
             { order_id: 'ORD-12345', date: '2024-12-15', total: 89.97, items: 3, status: 'shipped', tracking: '1Z999AA10123456784', carrier: 'UPS', delivery: '2024-12-30' },
             { order_id: 'ORD-11111', date: '2024-11-20', total: 249.99, items: 1, status: 'delivered', tracking: null, carrier: null, delivery: '2024-11-25' },
             { order_id: 'ORD-10000', date: '2024-10-05', total: 34.50, items: 2, status: 'delivered', tracking: null, carrier: null, delivery: '2024-10-10' },
         ],
-        'bob': [
+        'usr-e5f6g7h8': [
             { order_id: 'ORD-67890', date: '2024-12-20', total: 45.00, items: 1, status: 'processing', tracking: null, carrier: null, delivery: '2024-12-28' },
         ],
     };

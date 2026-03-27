@@ -1,3 +1,9 @@
+/**
+ * Costs & Safety: No external API calls. Mock articles.
+ * Module reference: [Model Context Protocol](https://aitutorial.dev/agents/model-context-protocol)
+ * Why: MCP server for FAQ and support article search.
+ */
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from 'express';
@@ -6,13 +12,8 @@ import { z } from 'zod';
 /**
  * Knowledge Base MCP Server
  *
- * Exposes a single tool for searching support articles and documentation.
- * Runs on its own port — agents discover it independently from other servers.
- *
- * Observability: The server reads `x-user-uuid` from request headers
- * to log which user triggered each tool call. In production, this
- * would typically use OAuth 2.0 Bearer tokens via the MCP auth
- * provider for proper authentication and authorization.
+ * Single tool: search_knowledge_base (FAQ and article search).
+ * User identified via x-user-uuid header for observability.
  */
 export class KnowledgeBaseServer {
     private app = express();

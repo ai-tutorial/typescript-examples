@@ -42,13 +42,15 @@ async function main(): Promise<void> {
         "customer-info": `${customer.url}/mcp`,
         "incident-tickets": `${tickets.url}/mcp`,
     };
-    const agent = new CustomerSupportAgent("alice", servers);
+    const agent = new CustomerSupportAgent(servers);
+    
     const tools = await agent.connect();
     console.log(`Discovered ${tools.length} tools: ${tools.join(', ')}`);
     console.log('');
 
+    const userUuid = "usr-a1b2c3d4";
     const threadId = "session-001";
-    const ask = (query: string) => agent.ask(threadId, query);
+    const ask = (query: string) => agent.ask(userUuid, threadId, query);
 
     // Step 3: Multi-turn conversation
     await ask("I was charged twice for order ORD-12345. Please create a high priority ticket.");

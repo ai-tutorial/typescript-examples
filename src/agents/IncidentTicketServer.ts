@@ -1,3 +1,9 @@
+/**
+ * Costs & Safety: No external API calls. In-memory tickets.
+ * Module reference: [Model Context Protocol](https://aitutorial.dev/agents/model-context-protocol)
+ * Why: MCP server for ticket creation and tracking with stateful storage.
+ */
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from 'express';
@@ -6,16 +12,8 @@ import { z } from 'zod';
 /**
  * Incident Ticket MCP Server
  *
- * Exposes tools for creating and tracking support tickets.
- * Tickets persist in memory for the lifetime of the server,
- * so a ticket created in one call can be queried in a later call.
- *
- * The user_uuid is extracted from the `x-user-uuid` HTTP header
- * (set by the agent) and injected into tool calls automatically —
- * the LLM never needs to pass it as a parameter.
- *
- * In production, this would use OAuth 2.0 Bearer tokens via
- * the MCP auth provider for proper authentication.
+ * Tools: create_ticket, get_ticket_status. Tickets persist in memory.
+ * User identified via x-user-uuid header — injected into tickets automatically.
  */
 export class IncidentTicketServer {
     private app = express();

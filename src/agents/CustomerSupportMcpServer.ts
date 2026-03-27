@@ -1,3 +1,9 @@
+/**
+ * Costs & Safety: No external API calls. Mock data.
+ * Module reference: [Model Context Protocol](https://aitutorial.dev/agents/model-context-protocol)
+ * Why: Legacy single-server MCP example (see split servers for production pattern).
+ */
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from 'express';

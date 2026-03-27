@@ -1,3 +1,9 @@
+/**
+ * Costs & Safety: No API calls. Stateless class.
+ * Module reference: [Agent Memory](https://aitutorial.dev/agents/memory)
+ * Why: Stateless agent with thread-based memory and multi-server MCP tool discovery.
+ */
+
 import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import { createAgent } from 'langchain';
 import { MemorySaver } from '@langchain/langgraph';
@@ -6,37 +12,21 @@ import { createModel } from './langchain_utils.js';
 /**
  * Customer Support Agent
  *
- * Connects to multiple MCP servers, discovers tools, and runs a
- * LangChain agent with thread-based memory. userId is set at
- * construction (one agent per user), threadId is passed per call
- * to support multiple conversations.
+ * Stateless LangChain agent that connects to multiple MCP servers
+ * and uses MemorySaver for thread-based conversation persistence.
  *
- * The agent itself is stateless — all conversation state lives in
- * the MemorySaver, keyed by threadId. This means:
- * - No need to re-create the agent per conversation
- * - Different threadIds = different conversations, same agent
- *
- * Usage:
- *   const agent = new CustomerSupportAgent("alice", { ... });
- *   await agent.connect();
- *   await agent.ask("session-1", "Create a ticket");
- *   await agent.ask("session-1", "What's the ticket status?");
- *   await agent.close();
+ * - user_uuid and thread_id are passed per call, not at construction
+ * - One instance serves all users concurrently
+ * - Conversation state lives in the checkpointer, not the agent
  */
 export class CustomerSupportAgent {
     private mcpClient: MultiServerMCPClient;
     private agent: any = null;
-    private userId: string;
 
-    constructor(userId: string, servers: Record<string, string>) {
-        this.userId = userId;
+    constructor(servers: Record<string, string>) {
         const config: Record<string, any> = {};
         for (const [name, url] of Object.entries(servers)) {
-            config[name] = {
-                transport: "http",
-                url,
-                headers: { "x-user-uuid": userId },
-            };
+            config[name] = { transport: "http", url };
         }
         this.mcpClient = new MultiServerMCPClient(config);
     }
@@ -52,7 +42,7 @@ export class CustomerSupportAgent {
 
 You have access to tools across three systems:
 - Knowledge Base: search help articles for FAQs, troubleshooting, and how-to guides
-- Customer Info: look up accounts by user_uuid, check order status, view purchase history, update preferences
+- Customer Info: look up accounts, check order status, view purchase history, update preferences
 - Incident Tickets: create support tickets and check their status
 
 On first interaction, call get_customer_info to learn the customer's name, email, tier, and status. The customer is identified automatically from the session — no need to pass any ID. Use this information for all subsequent interactions.
@@ -69,12 +59,12 @@ Rules:
         return tools.map(t => t.name);
     }
 
-    async ask(threadId: string, query: string): Promise<string> {
+    async ask(userId: string, threadId: string, query: string): Promise<string> {
         console.log(`User: ${query}`);
 
         const result = await this.agent.invoke(
             { messages: [{ role: "user", content: query }] },
-            { configurable: { thread_id: threadId, user_uuid: this.userId } }
+            { configurable: { thread_id: threadId, user_uuid: userId } }
         );
 
         this.logToolCalls(result.messages);

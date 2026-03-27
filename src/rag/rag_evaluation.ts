@@ -2,7 +2,7 @@
  * RAG Evaluation
  *
  * Costs & Safety: Uses LLM API calls for generation and evaluation. Costs apply per call.
- * Module reference: [Evaluation & Quality Metrics](https://aitutorial.dev/rag/rag-evaluation)
+ * Module reference: [Evaluation & Quality Metrics](https://aitutorial.dev/rag/evaluation-and-quality-metrics)
  * Why: Demonstrates how to evaluate RAG systems using retrieval metrics (Hit Rate, MRR) and generation metrics (Faithfulness, Relevancy via LLM-as-Judge).
  */
 

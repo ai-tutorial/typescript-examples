@@ -2,7 +2,7 @@
  * RAG Monitoring & Debugging
  *
  * Costs & Safety: Uses LLM API calls for evaluation. Costs apply per evaluation call.
- * Module reference: [Evaluation & Quality Metrics](https://aitutorial.dev/rag/rag-evaluation#building-a-golden-dataset)
+ * Module reference: [Evaluation & Quality Metrics](https://aitutorial.dev/rag/evaluation-and-quality-metrics#building-a-golden-dataset)
  * Why: Demonstrates continuous evaluation logic, Golden Dataset creation, and systematic debugging of RAG failures (Retrieval vs. Generation).
  */
 

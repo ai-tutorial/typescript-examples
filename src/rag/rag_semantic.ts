@@ -2,7 +2,7 @@
  * Semantic RAG with Vector Search
  *
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: [The Real-Life RAG Pipeline](https://aitutorial.dev/rag/rag-fundamentals#the-real-life-rag-pipeline)
+ * Module reference: [The Real-Life RAG Pipeline](https://aitutorial.dev/rag/fundamentals#the-real-life-rag-pipeline)
  * Why: Demonstrates a real RAG pipeline using semantic (vector) search over a document, with chunking and embedding-based retrieval.
  */
 

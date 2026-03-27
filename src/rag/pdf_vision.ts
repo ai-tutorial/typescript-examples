@@ -2,7 +2,7 @@
  * Vision Table Extraction
  *
  * Costs & Safety: Real API calls; cost depends on image size. Requires API key(s).
- * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-unstructured-data#vision-language-models-for-tables)
+ * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-pdfs#vision-language-models-for-tables)
  * Why: Vision models can "see" table structures (merged cells, multi-level headers) that OCR often messes up.
  */
 

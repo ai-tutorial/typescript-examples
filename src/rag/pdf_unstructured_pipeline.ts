@@ -1,6 +1,6 @@
 /**
  * Costs & Safety: Orchestrates multiple extractions. Costs depend on which methods (OCR, Vision, etc.) are triggered.
- * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-unstructured-data#a-complete-unstructured-data-pipeline)
+ * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/images-and-long-documents#a-complete-unstructured-data-pipeline)
  * Why: Demonstrates a robust "Router" pattern that dispatches files to the appropriate processor based on MIME type.
  */
 

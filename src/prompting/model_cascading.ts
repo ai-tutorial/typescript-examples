@@ -2,7 +2,7 @@
  * Model Cascading: Using Cheap Models First
  *
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: [Model Cascading: Using Cheap Models First](https://aitutorial.dev/model-selection-cost-optimization#model-cascading-using-cheap-models-first)
+ * Module reference: [Model Cascading: Using Cheap Models First](https://aitutorial.dev/prompting/model-selection-and-cost-optimization#model-cascading-using-cheap-models-first)
  * Why: Demonstrates how to reduce costs by trying a cheap model first and escalating to an expensive model only when confidence is low.
  */
 

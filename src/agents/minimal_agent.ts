@@ -7,7 +7,6 @@
 
 import { generateText } from 'ai';
 import { createModel } from './utils.js';
-import { fileURLToPath } from 'url';
 
 /**
  * The simplest LLM interaction: ask a question, get an answer
@@ -27,6 +26,4 @@ async function main(): Promise<void> {
     console.log(text);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    main().catch(console.error);
-}
+await main();

@@ -2,7 +2,7 @@
  * Structured Prompt Anatomy (Module 1)
  * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: [The Anatomy of a Production Prompt](https://aitutorial.dev/context-engineering-prompt-design/structured-prompt-engineering#the-anatomy-of-a-production-prompt)
+ * Module reference: [The Anatomy of a Production Prompt](https://aitutorial.dev/prompting/structured-prompt-engineering#the-anatomy-of-a-production-prompt)
  * Why: Structured prompts with explicit Role, Context, Instructions, Constraints, Examples, and Input
  *      tend to reduce hallucinations and parsing errors while improving reliability in production.
  */

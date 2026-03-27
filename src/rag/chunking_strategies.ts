@@ -1,6 +1,6 @@
 /**
  * Costs & Safety: Local processing only. No API calls required. Safe to run repeatedly.
- * Module reference: [Chunking and Metadata Strategies](https://aitutorial.dev/rag/chunking-and-metadata-strategies#fixed-size-chunking)
+ * Module reference: [Chunking and Metadata Strategies](https://aitutorial.dev/rag/chunking#fixed-size-chunking)
  * Why: Demonstrates various chunking techniques (Fixed-size, Semantic, Structure-aware) and metadata handling to optimize RAG retrieval performance.
  */
 

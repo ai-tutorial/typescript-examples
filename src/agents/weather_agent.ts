@@ -7,7 +7,6 @@
 
 import { createAgent, tool } from "langchain";
 import { z } from "zod";
-import { fileURLToPath } from 'url';
 import { createModel } from './langchain_utils.js';
 
 /**
@@ -68,6 +67,4 @@ async function main(): Promise<void> {
     console.log(`Agent: ${lastMessage.content}`);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    main().catch(console.error);
-}
+await main();

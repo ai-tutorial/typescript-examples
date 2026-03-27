@@ -2,7 +2,7 @@
  * Customer Sentiment Classification with Prompt Testing
  * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: [Example: Customer Sentiment Classification](https://aitutorial.dev/prompt-optimization-testing#example-customer-sentiment-classification)
+ * Module reference: [Example: Customer Sentiment Classification](https://aitutorial.dev/prompting/prompt-optimization-and-testing#example-customer-sentiment-classification)
  * Why: Demonstrates how to systematically test and improve prompts by defining success criteria, creating evaluation datasets, and iterating on prompt design.
  */
 

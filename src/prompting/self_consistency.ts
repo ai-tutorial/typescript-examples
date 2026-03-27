@@ -2,7 +2,7 @@
  * Self-Consistency: Multiple Reasoning Paths with Majority Voting
  *
  * Costs & Safety: Real API calls; generates multiple responses. Requires API key(s).
- * Module reference: [Self-Consistency: Voting for Reliability](https://aitutorial.dev/context-engineering-prompt-design/advanced-techniques#self-consistency-voting-for-reliability)
+ * Module reference: [Self-Consistency: Voting for Reliability](https://aitutorial.dev/prompting/advanced-techniques#self-consistency-voting-for-reliability)
  * Why: Improves accuracy by generating multiple chain-of-thought reasoning paths and taking
  *      a majority vote. Reduces the impact of individual reasoning errors.
  */

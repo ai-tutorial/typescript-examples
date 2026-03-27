@@ -2,7 +2,7 @@
  * Image Captioning for RAG
  *
  * Costs & Safety: Real API calls; moderate cost per image. Requires API key(s).
- * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-unstructured-data#when-to-caption-describe-images)
+ * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/images-and-long-documents#when-to-caption-describe-images)
  * Why: Generates descriptive captions for images (charts, photos) to make them searchable and understandable in RAG.
  */
 

@@ -1,3 +1,9 @@
+/**
+ * Costs & Safety: No API calls. Pure data structure definition.
+ * Module reference: [Chunking & Metadata Strategies](https://aitutorial.dev/rag/chunking#metadata-enrichment-the-secret-weapon)
+ * Why: Production-grade chunk with comprehensive metadata enables filtered retrieval by source, type, section, or date.
+ */
+
 export interface Metadata {
     source: string;
     chunk_id: string;

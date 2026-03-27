@@ -10,8 +10,6 @@
         "@ai-sdk/google": "^3.0.43",
         "@ai-sdk/openai": "^3.0.41",
         "ai": "^6.0.116",
-        "alasql": "^4.15.0",
-        "canvas": "^3.2.0",
         "dotenv": "^17.2.3",
         "jimp": "^1.6.0",
         "node-html-parser": "^7.0.1",
@@ -19,6 +17,7 @@
         "pdf-lib": "^1.17.1",
         "pdf-parse": "^1.1.1",
         "pdf-poppler": "^0.2.3",
+        "sql.js": "^1.14.1",
         "tesseract.js": "^7.0.0",
         "winston": "^3.19.0"
     },

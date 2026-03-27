@@ -2,7 +2,7 @@
  * Basic RAG Implementation
  *
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: [Basic RAG Implementation](https://aitutorial.dev/rag/rag-fundamentals#basic-rag-implementation)
+ * Module reference: [Basic RAG Implementation](https://aitutorial.dev/rag/fundamentals#basic-rag-implementation)
  * Why: Demonstrates the fundamental RAG pattern in its simplest form: load documents from a file, retrieve relevant ones, generate an answer.
  */
 

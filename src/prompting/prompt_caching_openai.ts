@@ -2,7 +2,7 @@
  * Prompt Caching with OpenAI
  * 
  * Costs & Safety: Real API calls; keep inputs small. Requires API key(s).
- * Module reference: [Prompt Caching: 50-90% Cost Reduction](https://aitutorial.dev/model-selection-cost-optimization#prompt-caching-50-90-cost-reduction)
+ * Module reference: [Prompt Caching: 50-90% Cost Reduction](https://aitutorial.dev/prompting/model-selection-and-cost-optimization#prompt-caching-50-90-cost-reduction)
  * Why: Demonstrates how to use OpenAI's prompt caching to reduce costs by 50% on cached portions when system prompts are above 1024 tokens.
  */
 

@@ -1,5 +1,7 @@
 /**
- * Quick script to create a sample table image for testing
+ * Costs & Safety: No API calls. Generates a local PNG file.
+ * Module reference: [Working with PDFs](https://aitutorial.dev/rag/working-with-pdfs#table-extraction-the-hard-problem)
+ * Why: Creates a sample table image used by the table extraction and vision examples.
  */
 import { createCanvas } from 'canvas';
 import { writeFileSync } from 'fs';

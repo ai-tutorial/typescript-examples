@@ -2,7 +2,7 @@
  * Hello World
  * 
  * Costs & Safety: Real API call; keep inputs small. Requires API key.
- * Module reference: [Hello World](https://aitutorial.dev/context-engineering-prompt-design/llm-fundamentals#hello-world)
+ * Module reference: [Hello World](https://aitutorial.dev/prompting/llm-fundamentals#hello-world)
  * Why: Basic example showing how to make a simple API call using the Vercel AI SDK.
  */
 

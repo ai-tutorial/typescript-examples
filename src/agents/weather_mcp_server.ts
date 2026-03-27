@@ -1,6 +1,6 @@
 /**
  * Costs & Safety: No external API calls - demonstrates MCP server structure with mock weather data.
- * Module reference: [Tool Design & Implementation](https://aitutorial.dev/agents/tool-design-and-implementation#model-context-protocol-mcp-introduction)
+ * Module reference: [Model Context Protocol (MCP)](https://aitutorial.dev/agents/model-context-protocol#model-context-protocol-mcp-introduction)
  * Why: MCP provides a standardized protocol for AI agents to discover and use tools, making integrations reusable across different AI systems.
  */
 
@@ -98,20 +98,41 @@ app.post('/mcp', async (req, res) => {
  * MCP servers can be accessed by any AI agent that supports the protocol.
  */
 async function main() {
-    app.listen(PORT, () => {
-        console.error('🚀 Weather MCP HTTP Server Started');
-        console.error(`Server: http://localhost:${PORT}`);
-        console.error(`Endpoint: POST http://localhost:${PORT}/mcp (JSON-RPC)`);
-        console.error(`Health: GET http://localhost:${PORT}/health`);
-        console.error('');
-        console.error('Available tools:');
-        console.error('  - get_weather');
-        console.error('');
-        console.error('💡 Test with:');
-        console.error(`   curl -X POST http://localhost:${PORT}/mcp -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`);
-        console.error('');
-        console.error('Ready to accept connections...');
+    // --- START SERVER ---
+    const server = await new Promise<any>((resolve) => {
+        const s = app.listen(PORT, () => resolve(s));
     });
+    console.log(`Weather MCP Server running at http://localhost:${PORT}`);
+    console.log(`Endpoint: POST http://localhost:${PORT}/mcp`);
+    console.log(`Health:   GET  http://localhost:${PORT}/health`);
+    console.log('');
+
+    // --- SELF-TEST: call the server as a client would ---
+    const baseUrl = `http://localhost:${PORT}/mcp`;
+    const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
+
+    // Step 1: Discover tools (tools/list)
+    const listRes = await fetch(baseUrl, {
+        method: 'POST', headers,
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+    });
+    const tools: any = await listRes.json();
+    console.log('Available tools:', JSON.stringify(tools.result?.tools?.map((t: any) => t.name) || [], null, 2));
+    console.log('');
+
+    // Step 2: Call a tool (tools/call)
+    const callRes = await fetch(baseUrl, {
+        method: 'POST', headers,
+        body: JSON.stringify({
+            jsonrpc: '2.0', id: 2, method: 'tools/call',
+            params: { name: 'get_weather', arguments: { location: 'Buenos Aires', units: 'celsius' } },
+        }),
+    });
+    const result: any = await callRes.json();
+    console.log('get_weather("Buenos Aires"):', result.result?.content?.[0]?.text || JSON.stringify(result));
+
+    // --- STOP SERVER ---
+    server.close();
 }
 
-main();
+await main();

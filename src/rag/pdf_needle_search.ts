@@ -2,7 +2,7 @@
  * Needle-in-a-Haystack Search
  *
  * Costs & Safety: Real API calls; cost proportional to context size. Requires API key(s).
- * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-unstructured-data#pattern-1-constant-output-tasks)
+ * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/images-and-long-documents#pattern-1-constant-output-tasks)
  * Why: Demonstrates the "Needle in a Haystack" pattern for finding specific facts in long documents.
  */
 

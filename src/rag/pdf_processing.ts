@@ -1,6 +1,6 @@
 /**
  * Costs & Safety: Uses local OCR (Tesseract.js). computationally intensive. No external API costs.
- * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-unstructured-data#combined-pdf-processing-pipeline)
+ * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-pdfs#combined-pdf-processing-pipeline)
  * Why: Demonstrates a robust pipeline for handling mixed PDF types (digital vs scanned) using fallbacks.
  */
 

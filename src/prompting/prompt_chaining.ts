@@ -2,7 +2,7 @@
  * Prompt Chaining (Module 1)
  *
  * Costs & Safety: Multiple calls; keep prompts minimal.
- * Module reference: [Prompt Chaining: Breaking Complex Tasks](https://aitutorial.dev/context-engineering-prompt-design/advanced-techniques#prompt-chaining-breaking-complex-tasks)
+ * Module reference: [Prompt Chaining: Breaking Complex Tasks](https://aitutorial.dev/prompting/advanced-techniques#prompt-chaining-breaking-complex-tasks)
  * Why: Break complex tasks into simple steps; retry and evaluate independently.
  *
  * Chain steps: classify → extract → respond

@@ -9,23 +9,38 @@
 import { generateText } from 'ai';
 import { createModel } from './utils.js';
 import { SemanticRetriever } from './utils/semantic_retriever';
-import alasql from 'alasql';
+import initSqlJs from 'sql.js';
 
 /**
- * In-memory SQL Database using AlaSQL
+ * In-memory SQLite database using sql.js (pure JS, no native deps).
+ * Demonstrates real SQL execution for hybrid RAG queries.
  */
 class InMemorySQLDB {
-    constructor() {
-        alasql('CREATE TABLE financials (quarter STRING, year INT, revenue INT, profit INT)');
-        alasql('INSERT INTO financials VALUES ("Q4", 2024, 1500000, 300000)');
-        alasql('INSERT INTO financials VALUES ("Q3", 2024, 1200000, 200000)');
+    private db: any;
+
+    private constructor(db: any) {
+        this.db = db;
+    }
+
+    static async create(): Promise<InMemorySQLDB> {
+        const SQL = await initSqlJs();
+        const db = new SQL.Database();
+        db.run('CREATE TABLE financials (quarter TEXT, year INT, revenue INT, profit INT)');
+        db.run('INSERT INTO financials VALUES ("Q4", 2024, 1500000, 300000)');
+        db.run('INSERT INTO financials VALUES ("Q3", 2024, 1200000, 200000)');
+        return new InMemorySQLDB(db);
     }
 
     async execute(query: string): Promise<string> {
         console.log(`  -> Executing SQL: ${query}`);
         try {
-            const res = alasql(query);
-            return JSON.stringify(res);
+            const results = this.db.exec(query);
+            if (results.length === 0) return "[]";
+            const cols = results[0].columns;
+            const rows = results[0].values.map((row: any[]) =>
+                Object.fromEntries(cols.map((col: string, i: number) => [col, row[i]]))
+            );
+            return JSON.stringify(rows);
         } catch (e: any) {
             return `Error executing SQL: ${e.message}`;
         }
@@ -58,7 +73,8 @@ async function classifyQuery(model: ReturnType<typeof createModel>, question: st
         messages: [{ role: 'user', content: classificationPrompt }],
     });
 
-    return JSON.parse(text || '{}');
+    const cleaned = (text || '{}').replace(/```json\s*\n?/g, '').replace(/```\s*$/g, '').trim();
+    return JSON.parse(cleaned);
 }
 
 /**
@@ -118,7 +134,7 @@ async function main(): Promise<void> {
     console.log('--- Hybrid Data RAG Example ---');
 
     // Step 1: Setup DataSources
-    const sqlDb = new InMemorySQLDB();
+    const sqlDb = await InMemorySQLDB.create();
     const documents = [
         'Analyst Report Q4 2024: Market conditions were favorable.',
         'Competitor analysis: Competitor X launched a new product causing headwinds.',

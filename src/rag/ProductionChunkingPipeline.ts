@@ -1,3 +1,9 @@
+/**
+ * Costs & Safety: No API calls. Local processing only.
+ * Module reference: [Chunking & Metadata Strategies](https://aitutorial.dev/rag/chunking#chunking-strategies)
+ * Why: End-to-end chunking pipeline with caching, strategy selection, and quality filtering for production RAG systems.
+ */
+
 import * as crypto from "crypto";
 import { DocumentChunk } from "./DocumentChunk";
 import { semanticChunking, structureAwareChunking, fixedSizeChunking } from "./chunking_methods";

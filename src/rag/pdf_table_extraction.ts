@@ -1,6 +1,6 @@
 /**
  * Costs & Safety: Uses local processing via pdf-parse. No external API costs.
- * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-unstructured-data#specialized-table-extractors)
+ * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-pdfs#specialized-table-extractors)
  * Why: Demonstrates how to extract tabular data from PDFs and convert it to Markdown for optimal LLM consumption.
  */
 

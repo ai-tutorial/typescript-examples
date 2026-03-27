@@ -1,6 +1,6 @@
 /**
  * Costs & Safety: Uses local OCR via Tesseract.js. Computationally intensive but free.
- * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/working-with-unstructured-data#when-to-extract-text-from-images)
+ * Module reference: [Working with PDF and Images](https://aitutorial.dev/rag/images-and-long-documents#when-to-extract-text-from-images)
  * Why: Demonstrates how to extract text from images (e.g., scanned docs, screenshots) for RAG keywording.
  */
 

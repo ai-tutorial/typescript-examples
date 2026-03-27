@@ -1,6 +1,6 @@
 /**
  * Costs & Safety: No API calls. Local analytics only.
- * Module reference: [Tool Selection & Optimization](https://aitutorial.dev/agent-reliability-and-optimization/tool-selection-and-optimization#advanced-optimization-techniques)
+ * Module reference: [Tool Selection & Optimization](https://aitutorial.dev/agents/tool-selection-and-optimization#advanced-optimization-techniques)
  * Why: Monitors tool usage patterns (calls, successes, failures, latency) and generates optimization recommendations.
  */
 

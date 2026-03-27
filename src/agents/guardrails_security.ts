@@ -1,6 +1,6 @@
 /**
  * Costs & Safety: No API calls. Local pattern matching only.
- * Module reference: [Business Rules & Guardrails](https://aitutorial.dev/agent-reliability-and-optimization/business-rules-and-guardrails#pattern-4-security-guardrails-pii-jailbreaks-toxicity)
+ * Module reference: [Business Rules & Guardrails](https://aitutorial.dev/agents/business-rules-and-guardrails#pattern-4-security-guardrails-pii-jailbreaks-toxicity)
  * Why: Security guardrails protect against PII leakage, jailbreak attempts, and sensitive data in outputs — applied deterministically, not via prompts.
  */
 

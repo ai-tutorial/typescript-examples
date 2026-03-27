@@ -1,7 +1,7 @@
 /**
  * Costs & Safety: Uses LLM API. Multiple calls per demo.
  * Env: AI_PROVIDER (openai|gemini), OPENAI_API_KEY, OPENAI_MODEL, GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_MODEL
- * Module reference: [Business Rules & Guardrails](https://aitutorial.dev/agent-reliability-and-optimization/business-rules-and-guardrails#full-example-insurance-claims-processing)
+ * Module reference: [Business Rules & Guardrails](https://aitutorial.dev/agents/business-rules-and-guardrails#full-example-insurance-claims-processing)
  * Why: Full end-to-end example combining deterministic validation, guardrails, and LLM generation for insurance claims.
  */
 

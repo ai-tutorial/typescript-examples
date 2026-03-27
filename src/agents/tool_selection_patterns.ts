@@ -1,7 +1,7 @@
 /**
  * Costs & Safety: Uses LLM API for agent execution. Multiple LLM calls per demo.
  * Env: AI_PROVIDER (openai|gemini), OPENAI_API_KEY, OPENAI_MODEL, GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_MODEL
- * Module reference: [Tool Selection & Optimization](https://aitutorial.dev/agent-reliability-and-optimization/tool-selection-and-optimization)
+ * Module reference: [Tool Selection & Optimization](https://aitutorial.dev/agents/tool-selection-and-optimization)
  * Why: Demonstrates patterns to improve tool selection accuracy — hierarchical routing, context-based filtering, and clear differentiation.
  */
 

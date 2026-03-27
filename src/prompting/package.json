@@ -7,11 +7,11 @@
         "test:prompting": "ROOT=$(cd ../.. && pwd) && for f in *.ts; do echo \"\\n=== Running $f ===\"; (cd \"$ROOT\" && npx tsx \"src/prompting/$f\") || exit 1; done"
     },
     "dependencies": {
+        "@ai-sdk/anthropic": "^3.0.64",
         "@ai-sdk/google": "^3.0.43",
         "@ai-sdk/openai": "^3.0.41",
         "@anthropic-ai/sdk": "^0.71.2",
         "ai": "^6.0.116",
-
         "dotenv": "^17.2.3",
         "fast-xml-parser": "^4.3.6",
         "xml-escape": "^1.1.0"

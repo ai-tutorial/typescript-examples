@@ -42,16 +42,30 @@ function reciprocalRankFusion(rankings: number[][], k: number = 60): number[] {
 }
 
 /**
- * Perform hybrid search combining lexical and semantic search with RRF fusion
+ * Stage 1: Fast retrieval — run lexical and semantic search in parallel
  */
-async function performHybridSearch(query: string, docs: string[]): Promise<Array<{ docIdx: number; document: string }>> {
-    const bm25Results = await (await LexicalRetriever.create(docs, 20)).searchIndexes(query, 20);
-    console.log('Performing semantic (vector) search with SemanticRetriever...');
-    const semanticResults = await (await SemanticRetriever.create(docs, 20)).searchIndexes(query, 20);
+async function fastRetrieval(query: string, docs: string[]): Promise<{ lexicalRanking: number[]; semanticRanking: number[] }> {
+    console.log('Running lexical (BM25) and semantic (vector) search in parallel...');
+    const [lexicalRanking, semanticRanking] = await Promise.all([
+        (await LexicalRetriever.create(docs, 20)).searchIndexes(query, 20),
+        (await SemanticRetriever.create(docs, 20)).searchIndexes(query, 20),
+    ]);
 
-    const fusedResults = reciprocalRankFusion([bm25Results, semanticResults]);
+    return { lexicalRanking, semanticRanking };
+}
 
-    return fusedResults.slice(0, 15).map(idx => ({
+/**
+ * Stage 2: Reciprocal Rank Fusion — merge multiple rankings into a single list
+ */
+function fuseRankings(
+    rankings: { lexicalRanking: number[]; semanticRanking: number[] },
+    docs: string[],
+    topK: number = 15
+): Array<{ docIdx: number; document: string }> {
+    console.log('Fusing lexical + semantic rankings with Reciprocal Rank Fusion (RRF)...');
+    const fusedResults = reciprocalRankFusion([rankings.lexicalRanking, rankings.semanticRanking]);
+
+    return fusedResults.slice(0, topK).map(idx => ({
         docIdx: idx,
         document: docs[idx],
     }));
@@ -117,17 +131,20 @@ async function generateAnswer(
 }
 
 /**
- * Main function that demonstrates cross-encoder reranking in a RAG pipeline
+ * Main function that demonstrates the 4-stage RAG pipeline with cross-encoder reranking
  *
- * This example shows how to implement a complete reranking workflow:
- * retrieve candidates using fast methods, merge with RRF, rerank with a cross-encoder, then generate.
+ * This example shows how to implement a complete multi-stage retrieval workflow:
+ * (1) fast retrieval with lexical + semantic search in parallel,
+ * (2) Reciprocal Rank Fusion to merge rankings, (3) cross-encoder reranking
+ * for precision, and (4) LLM generation from the top results.
  *
- * This two-stage approach balances speed (fast retrieval) with accuracy (precise reranking).
+ * This multi-stage approach balances speed (fast retrieval), coverage (RRF fusion),
+ * and accuracy (cross-encoder reranking).
  */
 async function main(): Promise<void> {
     const model = createModel();
 
-    // Step 1: Load and prepare documents
+    // Setup: Load documents and define query
     const essayPath = join(process.cwd(), 'assets', 'paul_graham_essay.txt');
     const essayText = readFileSync(essayPath, 'utf-8');
     const docs = essayText.split('\n\n').filter(p => p.trim().length > 0);
@@ -135,7 +152,6 @@ async function main(): Promise<void> {
     console.log(`Loaded ${docs.length} document chunks`);
     console.log('');
 
-    // Step 2: Define query
     const query = `How did Paul Graham's experiences with both "low end eats high end" products
                     and working on unprestigious projects influence his decisions when founding Y Combinator?
                     Include specific examples of what he learned at Interleaf about software markets,
@@ -146,13 +162,19 @@ async function main(): Promise<void> {
     console.log(`${query}`);
     console.log('');
 
-    // Step 3: Hybrid retrieval (lexical + semantic)
-    const hybridResults = await performHybridSearch(query, docs);
-    console.log(`Retrieved ${hybridResults.length} candidates via hybrid search`);
+    // Stage 1: Fast retrieval (lexical + semantic in parallel)
+    const rankings = await fastRetrieval(query, docs);
+    console.log(`Lexical returned ${rankings.lexicalRanking.length} candidates`);
+    console.log(`Semantic returned ${rankings.semanticRanking.length} candidates`);
     console.log('');
 
-    // Step 4: Rerank with cross-encoder
-    const rerankedResults = await rerankWithCrossEncoder(query, hybridResults);
+    // Stage 2: Reciprocal Rank Fusion (merge rankings into top 15 for reranking)
+    const fusedResults = fuseRankings(rankings, docs);
+    console.log(`RRF produced ${fusedResults.length} fused candidates`);
+    console.log('');
+
+    // Stage 3: Rerank with cross-encoder
+    const rerankedResults = await rerankWithCrossEncoder(query, fusedResults);
     console.log('Top 3 after cross-encoder reranking:');
     rerankedResults.slice(0, 3).forEach((result, i) => {
         console.log(`${i + 1}. Doc ${result.docIdx} (score: ${result.rerankScore.toFixed(3)})`);
@@ -160,7 +182,7 @@ async function main(): Promise<void> {
     });
     console.log('');
 
-    // Step 5: Generate answer with top results
+    // Stage 4: Generate answer with top results
     await generateAnswer(model, query, rerankedResults.slice(0, 5));
 }
 

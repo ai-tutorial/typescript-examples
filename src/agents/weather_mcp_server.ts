@@ -117,7 +117,7 @@ async function main() {
         body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
     });
     const tools: any = await listRes.json();
-    console.log('Available tools:', JSON.stringify(tools.result?.tools?.map((t: any) => t.name) || [], null, 2));
+    console.log('tools/list response:', JSON.stringify(tools, null, 2));
     console.log('');
 
     // Step 2: Call a tool (tools/call)

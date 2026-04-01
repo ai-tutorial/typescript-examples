@@ -8,10 +8,14 @@ import 'dotenv/config';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from 'express';
+import https from 'https';
+import { execSync } from 'child_process';
 import { z } from 'zod';
 
-// Client should connect to: http://localhost:8002/mcp
-const PORT = process.env.PORT || 8002;
+// Client should connect to: http://localhost:8002/mcp or https://localhost:8443/mcp
+const HTTP_PORT = process.env.PORT || 8002;
+const HTTPS_PORT = process.env.HTTPS_PORT || 8443;
+const KEEP_ALIVE = process.argv.includes('--keep-alive');
 
 // Create Express app
 const app = express();
@@ -98,17 +102,32 @@ app.post('/mcp', async (req, res) => {
  * MCP servers can be accessed by any AI agent that supports the protocol.
  */
 async function main() {
-    // --- START SERVER ---
-    const server = await new Promise<any>((resolve) => {
-        const s = app.listen(PORT, () => resolve(s));
+    // --- START HTTP SERVER ---
+    const httpServer = await new Promise<any>((resolve) => {
+        const s = app.listen(HTTP_PORT, () => resolve(s));
     });
-    console.log(`Weather MCP Server running at http://localhost:${PORT}`);
-    console.log(`Endpoint: POST http://localhost:${PORT}/mcp`);
-    console.log(`Health:   GET  http://localhost:${PORT}/health`);
+
+    // --- START HTTPS SERVER (self-signed cert) ---
+    const certOutput = execSync(
+        'openssl req -x509 -newkey rsa:2048 -keyout /dev/stdout -out /dev/stdout -days 1 -nodes -subj "/CN=localhost" 2>/dev/null',
+        { encoding: 'utf-8' }
+    );
+    const key = certOutput.match(/-----BEGIN PRIVATE KEY-----[\s\S]+?-----END PRIVATE KEY-----/)![0];
+    const cert = certOutput.match(/-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/)![0];
+
+    const httpsServer = await new Promise<any>((resolve) => {
+        const s = https.createServer({ key, cert }, app).listen(HTTPS_PORT, () => resolve(s));
+    });
+
+    console.log(`Weather MCP Server running on:`);
+    console.log(`  HTTP:  http://localhost:${HTTP_PORT}`);
+    console.log(`  HTTPS: https://localhost:${HTTPS_PORT}`);
+    console.log(`Endpoint: POST /mcp`);
+    console.log(`Health:   GET  /health`);
     console.log('');
 
     // --- SELF-TEST: call the server as a client would ---
-    const baseUrl = `http://localhost:${PORT}/mcp`;
+    const baseUrl = `http://localhost:${HTTP_PORT}/mcp`;
     const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream' };
 
     // Step 1: Discover tools (tools/list)
@@ -131,8 +150,14 @@ async function main() {
     const result: any = await callRes.json();
     console.log('get_weather("Buenos Aires"):', result.result?.content?.[0]?.text || JSON.stringify(result));
 
-    // --- STOP SERVER ---
-    server.close();
+    // --- STOP SERVER (unless --keep-alive) ---
+    if (KEEP_ALIVE) {
+        console.log('');
+        console.log('Server kept alive. Press Ctrl+C to stop.');
+    } else {
+        httpServer.close();
+        httpsServer.close();
+    }
 }
 
 await main();

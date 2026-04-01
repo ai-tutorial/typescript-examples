@@ -13,10 +13,10 @@
     "startCommand": "sh welcome.sh"
   },
   "devDependencies": {
+    "@types/xml-escape": "^1.1.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "~5.9.3",
-    "@types/xml-escape": "^1.1.3"
+    "typescript": "~5.9.3"
   },
   "dependencies": {
     "@types/node": "^25.5.0",
